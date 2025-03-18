@@ -19,6 +19,7 @@
     <orderEntry type="jdk" jdkName="Python 3.12 (Smart_Parking)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="00ac82b6db" level="application" />
+    <orderEntry type="library" name="leaflet" level="application" />
   </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_CONFIGURATION" value="Django" />

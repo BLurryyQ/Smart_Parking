@@ -4,8 +4,11 @@ from Smart_Parking.database import db
 from bson.objectid import ObjectId
 from datetime import datetime
 
-
 def staff_list(request):
+    # Ensure the user is logged in
+    if "user_id" not in request.session:
+        return redirect("/login/")
+
     staff = list(db.users.find({"role": "staff"}))
     for user in staff:
         user['id'] = str(user['_id'])
@@ -13,8 +16,10 @@ def staff_list(request):
 
     return render(request, 'staff/staff_list.html', {'staff': staff, 'segment': 'staff'})
 
-
 def add_staff(request):
+    if "user_id" not in request.session:
+        return redirect("/login/")
+
     if request.method == 'POST':
         user_data = {
             "email": request.POST.get('email'),
@@ -28,16 +33,16 @@ def add_staff(request):
             "createdAt": datetime.now(),
             "updatedAt": datetime.now()
         }
-        if 'lastLogin' in request.POST and request.POST['lastLogin']:
-            user_data['lastLogin'] = datetime.strptime(request.POST['lastLogin'], '%Y-%m-%d %H:%M:%S')
 
         db.users.insert_one(user_data)
         return redirect('staff_list')
 
     return render(request, 'staff/add_staff.html', {'segment': 'staff'})
 
-
 def update_staff(request, id):
+    if "user_id" not in request.session:
+        return redirect("/login/")
+
     staff = db.users.find_one({"_id": ObjectId(id)})
     if not staff:
         messages.error(request, "Staff member not found.")
@@ -58,8 +63,10 @@ def update_staff(request, id):
 
     return render(request, 'staff/update_staff.html', {'staff': staff, 'segment': 'staff'})
 
-
 def delete_staff(request, id):
+    if "user_id" not in request.session:
+        return redirect("/login/")
+
     if request.method == 'POST':
         result = db.users.delete_one({"_id": ObjectId(id)})
         if result.deleted_count > 0:
@@ -67,5 +74,5 @@ def delete_staff(request, id):
         else:
             messages.error(request, "Failed to delete staff member.")
         return redirect('staff_list')
-    else:
-        return redirect('staff_list')
+
+    return redirect('staff_list')

@@ -23,6 +23,12 @@
               <span class="nav-link-text">Staff</span>
             </a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link {% if segment == 'parking' %} active {% endif %}" href="{% url 'parking_list' %}">
+              <i class="ni ni-square-pin text-blue"></i>
+              <span class="nav-link-text">Parking Management</span>
+            </a>
+          </li>
         </ul>
         <!-- Divider -->
         <hr class="my-3">

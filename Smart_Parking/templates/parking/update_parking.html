@@ -1,0 +1,150 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block title %} Update Parking {% endblock %}
+
+{% block stylesheets %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Update Parking Lot</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{% url 'parking_list' %}">Parking</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Update Parking</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col-lg-8 offset-lg-2">
+      <div class="card">
+        <div class="card-header bg-transparent">
+          <h3 class="mb-0">Update Parking Lot</h3>
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+
+            <div class="row">
+              <!-- Owner -->
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Owner</label>
+                  <input type="text" class="form-control" name="owner" value="{{ parking.owner }}" required>
+                </div>
+              </div>
+
+              <!-- Parking Name -->
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Parking Name</label>
+                  <input type="text" class="form-control" name="nom" value="{{ parking.nom }}" required>
+                </div>
+              </div>
+
+              <!-- Capacity -->
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Total Capacity</label>
+                  <input type="number" class="form-control" name="capaciteTotal" value="{{ parking.capaciteTotal }}" required min="1">
+                </div>
+              </div>
+
+              <!-- Available Spaces -->
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Available Spaces</label>
+                  <input type="number" class="form-control" name="placeDisponibles" value="{{ parking.placeDisponibles }}" required min="0">
+                </div>
+              </div>
+
+              <!-- Status -->
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Status</label>
+                  <select class="form-control" name="status">
+                    <option value="active" {% if parking.status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if parking.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                    <option value="maintenance" {% if parking.status == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Map -->
+              <div class="col-md-12">
+                <label class="form-label"><strong>Choose Location on Map</strong></label>
+                <div id="map" style="height: 300px; border-radius: 10px;"></div>
+                <small class="text-muted">Click on the map to update the location.</small>
+              </div>
+
+              <!-- Location Inputs -->
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Street</label>
+                  <input type="text" class="form-control" name="rue" id="rue" value="{{ parking.localisation.rue }}" required>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">City</label>
+                  <input type="text" class="form-control" name="ville" id="ville" value="{{ parking.localisation.ville }}" required>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Postal Code</label>
+                  <input type="text" class="form-control" name="codePostal" id="codePostal" value="{{ parking.localisation.codePostal }}">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Country</label>
+                  <input type="text" class="form-control" name="pays" id="pays" value="{{ parking.localisation.pays }}" required>
+                </div>
+              </div>
+
+              <input type="hidden" name="latitude" id="latitude" value="{{ parking.localisation.coordinates.0 }}">
+              <input type="hidden" name="longitude" id="longitude" value="{{ parking.localisation.coordinates.1 }}">
+            </div>
+
+            <div class="text-center">
+              <button type="submit" class="btn btn-primary">Update Parking</button>
+              <a href="{% url 'parking_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include "includes/footer.html" %}
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+  var parkingLat = {{ parking.localisation.coordinates.0|default:34.0209 }};
+  var parkingLng = {{ parking.localisation.coordinates.1|default:-6.8416 }};
+</script>
+<script src="{% static 'assets/js/parking_map.js' %}"></script>
+{% endblock %}
