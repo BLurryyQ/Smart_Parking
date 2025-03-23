@@ -3,6 +3,7 @@ from django.contrib import messages
 from Smart_Parking.database import db
 from bson.objectid import ObjectId
 from datetime import datetime
+from django.contrib.auth.hashers import make_password  # Import Django's hashing
 
 def staff_list(request):
     # Ensure the user is logged in
@@ -21,13 +22,18 @@ def add_staff(request):
         return redirect("/login/")
 
     if request.method == 'POST':
+        password = request.POST.get('password')
+
+        # Hash the password using Django's make_password()
+        hashed_password = make_password(password)
+
         user_data = {
             "email": request.POST.get('email'),
             "nom": request.POST.get('nom'),
             "prenom": request.POST.get('prenom'),
             "telephone": request.POST.get('telephone'),
             "login": request.POST.get('login'),
-            "password": request.POST.get('password'),
+            "password": hashed_password,  # Store Django-hashed password
             "role": "staff",
             "isActive": True,
             "createdAt": datetime.now(),
@@ -35,6 +41,7 @@ def add_staff(request):
         }
 
         db.users.insert_one(user_data)
+        messages.success(request, "Staff member added successfully!")
         return redirect('staff_list')
 
     return render(request, 'staff/add_staff.html', {'segment': 'staff'})
@@ -57,8 +64,14 @@ def update_staff(request, id):
             "updatedAt": datetime.now(),
         }
 
+        # Check if password is being updated
+        new_password = request.POST.get('password')
+        if new_password:
+            hashed_password = make_password(new_password)  # Hash new password
+            update_data["password"] = hashed_password  # Store the new hashed password
+
         db.users.update_one({"_id": ObjectId(id)}, {"$set": update_data})
-        messages.success(request, "Staff member updated successfully.")
+        messages.success(request, "Staff member updated successfully!")
         return redirect('staff_list')
 
     return render(request, 'staff/update_staff.html', {'staff': staff, 'segment': 'staff'})
@@ -73,6 +86,5 @@ def delete_staff(request, id):
             messages.success(request, "Staff member deleted successfully.")
         else:
             messages.error(request, "Failed to delete staff member.")
-        return redirect('staff_list')
 
     return redirect('staff_list')
