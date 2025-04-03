@@ -3,7 +3,7 @@
     <!-- Brand -->
     <div class="sidenav-header  align-items-center">
       <a class="navbar-brand" href="/">
-        <img src="/static/assets/img/brand/blue.png" class="navbar-brand-img" alt="IParck Logo.">
+        <img src="/static/assets/img/brand/logo_ipark_black.png" class="navbar-brand-img" alt="IParck Logo.">
       </a>
     </div>
     <div class="navbar-inner">
@@ -19,13 +19,13 @@
           </li>
           <li class="nav-item">
             <a class="nav-link {% if segment == 'staff' %} active {% endif %}" href="{% url 'staff_list' %}">
-              <i class="ni ni-badge text-orange"></i>
+              <i class="ni ni-badge text-warning"></i>
               <span class="nav-link-text">Staff</span>
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link {% if segment == 'parking' %} active {% endif %}" href="{% url 'parking_list' %}">
-              <i class="ni ni-square-pin text-blue"></i>
+              <i class="ni ni-square-pin text-danger"></i>
               <span class="nav-link-text">Parking Management</span>
             </a>
           </li>
@@ -40,10 +40,10 @@
         <ul class="navbar-nav mb-md-3">
           <li class="nav-item">
             <a class="nav-link {% if segment == 'profile' %} active {% endif %}" href="/profile.html">
-              <i class="ni ni-single-02 text-yellow"></i>
+              <i class="ni ni-single-02 text-dark"></i>
               <span class="nav-link-text">Profile</span>
             </a>
-          </li>
+          </li> 
           <li class="nav-item">
             <a class="nav-link" href="{% url 'logout' %}">
               <i class="ni ni-user-run text-red"></i>
