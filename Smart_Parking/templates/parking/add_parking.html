@@ -1,0 +1,146 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block title %} Add Parking {% endblock %}
+
+{% block stylesheets %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<div class="header bg-warning pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Add Parking Lot</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{% url 'parking_list' %}">Parking</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Add Parking</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col-lg-8 offset-lg-2">
+      <div class="card">
+        <div class="card-header bg-transparent">
+          <h3 class="mb-0">Add New Parking Lot</h3>
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+
+            <div class="row">
+              <!-- Owner -->
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Owner</label>
+                  <input type="text" class="form-control" name="owner" required placeholder="Enter owner name">
+                </div>
+              </div>
+
+              <!-- Parking Name -->
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Parking Name</label>
+                  <input type="text" class="form-control" name="nom" required placeholder="Enter parking name">
+                </div>
+              </div>
+
+              <!-- Capacity -->
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Total Capacity</label>
+                  <input type="number" class="form-control" name="capaciteTotal" required min="1" placeholder="Total capacity">
+                </div>
+              </div>
+
+              <!-- Available Spaces -->
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Available Spaces</label>
+                  <input type="number" class="form-control" name="placeDisponibles" required min="0" placeholder="Available spaces">
+                </div>
+              </div>
+
+              <!-- Status -->
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Status</label>
+                  <select class="form-control" name="status">
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="maintenance">Maintenance</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Map -->
+              <div class="col-md-12">
+                <label class="form-label"><strong>Choose Location on Map</strong></label>
+                <div id="map" style="height: 300px; border-radius: 10px;"></div>
+                <small class="text-muted">Click on the map to select the parking location.</small>
+              </div>
+
+              <!-- Location Inputs -->
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Street</label>
+                  <input type="text" class="form-control" name="rue" id="rue" required>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">City</label>
+                  <input type="text" class="form-control" name="ville" id="ville" required>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Postal Code</label>
+                  <input type="text" class="form-control" name="codePostal" id="codePostal">
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label class="form-label">Country</label>
+                  <input type="text" class="form-control" name="pays" id="pays" required>
+                </div>
+              </div>
+
+              <input type="hidden" name="latitude" id="latitude">
+              <input type="hidden" name="longitude" id="longitude">
+            </div>
+
+            <div class="text-center">
+              <button type="submit" class="btn btn-primary">Add Parking</button>
+              <a href="{% url 'parking_list' %}" class="btn btn-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% include "includes/footer.html" %}
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="{% static 'assets/js/parking_map.js' %}"></script>
+{% endblock %}

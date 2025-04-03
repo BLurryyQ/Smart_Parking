@@ -1,0 +1,66 @@
+<nav class="sidenav navbar navbar-vertical  fixed-left  navbar-expand-xs navbar-light bg-white" id="sidenav-main">
+  <div class="scrollbar-inner">
+    <!-- Brand -->
+    <div class="sidenav-header  align-items-center">
+      <a class="navbar-brand" href="/">
+        <img src="/static/assets/img/brand/logo_ipark_black.png" class="navbar-brand-img" alt="IParck Logo.">
+      </a>
+    </div>
+    <div class="navbar-inner">
+      <!-- Collapse -->
+      <div class="collapse navbar-collapse" id="sidenav-collapse-main">
+        <!-- Nav items -->
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link {% if segment == 'index' %} active {% endif %}" href="/">
+              <i class="ni ni-tv-2 text-primary"></i>
+              <span class="nav-link-text">Dashboard</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if segment == 'staff' %} active {% endif %}" href="{% url 'staff_list' %}">
+              <i class="ni ni-badge text-warning"></i>
+              <span class="nav-link-text">Staff</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if segment == 'parking' %} active {% endif %}" href="{% url 'parking_list' %}">
+              <i class="ni ni-square-pin text-danger"></i>
+              <span class="nav-link-text">Parking Management</span>
+            </a>
+          </li>
+        </ul>
+        <!-- Divider -->
+        <hr class="my-3">
+        <!-- Heading -->
+        <h6 class="navbar-heading p-0 text-muted">
+          <span class="docs-normal">Account</span>
+        </h6>
+        <!-- Navigation -->
+        <ul class="navbar-nav mb-md-3">
+          <li class="nav-item">
+            <a class="nav-link {% if segment == 'profile' %} active {% endif %}" href="/profile.html">
+              <i class="ni ni-single-02 text-dark"></i>
+              <span class="nav-link-text">Profile</span>
+            </a>
+          </li> 
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'logout' %}">
+              <i class="ni ni-user-run text-red"></i>
+              <span class="nav-link-text">Logout</span>
+            </a>
+          </li>
+
+          <li class="nav-item">
+            <a class="nav-link active active-pro"
+               target="_blank"
+               href="#">
+              <i class="ni ni-mobile-button text-dark"></i>
+              <span class="nav-link-text">Mobile App</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</nav>
