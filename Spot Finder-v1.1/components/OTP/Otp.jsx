@@ -1,11 +1,16 @@
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Keyboard } from 'react-native';
-import React, { useContext, useRef, useState } from 'react';
+import { StyleSheet, TextInput, View, Keyboard } from 'react-native';
+import React, { useContext, useRef, useState, useImperativeHandle, forwardRef } from 'react';
 import ThemeContext from '../../theme/ThemeContext';
 
-const Otp = () => {
-    const { theme,  darkMode } = useContext(ThemeContext);
+const Otp = forwardRef((props, ref) => {
+    const { theme } = useContext(ThemeContext);
     const otpInputs = useRef([]);
     const [otp, setOtp] = useState(['', '', '', '']);
+
+    useImperativeHandle(ref, () => ({
+        getCode: () => otp.join('')
+    }));
+
     const handleOtpChange = (index, value) => {
         if (isNaN(value)) return;
         const newOtp = [...otp];
@@ -17,6 +22,7 @@ const Otp = () => {
             Keyboard.dismiss();
         }
     };
+
     const handleBackspace = (index, event) => {
         if (event.nativeEvent.key === 'Backspace') {
             const newOtp = [...otp];
@@ -33,25 +39,23 @@ const Otp = () => {
         }
     };
 
-  return (
-    <View>
+    return (
         <View style={styles.otp_block}>
-                    {otp.map((digit, index) => (
-                        <TextInput
-                            key={index}
-                            style={[styles.input, {color: theme.color}]}
-                            maxLength={1}
-                            keyboardType="numeric"
-                            onChangeText={(value) => handleOtpChange(index, value)}
-                            onKeyPress={(event) => handleBackspace(index, event)}
-                            value={digit}
-                            ref={(ref) => otpInputs.current[index] = ref}
-                        />
-                    ))}
-                </View>
-    </View>
-  )
-}
+            {otp.map((digit, index) => (
+                <TextInput
+                    key={index}
+                    style={[styles.input, { color: theme.color }]}
+                    maxLength={1}
+                    keyboardType="numeric"
+                    onChangeText={(value) => handleOtpChange(index, value)}
+                    onKeyPress={(event) => handleBackspace(index, event)}
+                    value={digit}
+                    ref={(ref) => (otpInputs.current[index] = ref)}
+                />
+            ))}
+        </View>
+    );
+});
 
 export default Otp;
 
@@ -75,4 +79,4 @@ const styles = StyleSheet.create({
         backgroundColor: 'transparent',
         borderColor: '#BABABA',
     },
-})
+});

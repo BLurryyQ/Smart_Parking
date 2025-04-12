@@ -142,9 +142,6 @@ rating: {
     fontFamily: 'Roboto_400Regular',
     color: '#121212',
 },
-wishlist_container: {
-    padding: 5,
-},
 card_body: {
 
 },
@@ -245,6 +242,7 @@ stack_img: {
 },
 wishlist_container: {
   position: 'absolute',
+  padding: 5,
   top: 10,
   left: 70,
 },

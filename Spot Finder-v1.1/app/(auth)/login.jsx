@@ -1,8 +1,7 @@
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, ActivityIndicator } from 'react-native';
 import React, { useContext, useState } from 'react';
 import { router, Link } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import Mail from '../../assets/images/mail.svg';
 import Lock from '../../assets/images/lock.svg';
 import Button from '../../components/Button/Button';
@@ -11,19 +10,21 @@ import Input from '../../components/Input/Input';
 import Password from '../../components/Password/Password';
 
 const Login = () => {
-  const { theme, darkMode } = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleLogin = async () => {
     if (!username || !password) {
-      Alert.alert("Validation Error", "Please fill in both fields.");
+      setErrorMessage("Please fill in both fields.");
       return;
     }
 
     setLoading(true);
+    setErrorMessage('');
 
     try {
       const response = await fetch('http://127.0.0.1:8000/api/mobile-auth/login/', {
@@ -35,16 +36,16 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        await AsyncStorage.setItem('userId', data.userId);
-        await AsyncStorage.setItem('username', data.username);
+        await AsyncStorage.setItem('userId', data.user.userId);
+        await AsyncStorage.setItem('username', data.user.login);
+        await AsyncStorage.setItem('user', JSON.stringify(data.user));
 
-        Alert.alert("Login Successful", `Welcome, ${data.username}`);
         router.push('location');
       } else {
-        Alert.alert("Login Failed", data.message || "Invalid credentials");
+        setErrorMessage(data.error || "Incorrect username or password");
       }
     } catch (error) {
-      Alert.alert("Error", "Something went wrong. Please try again.");
+      setErrorMessage("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -61,8 +62,8 @@ const Login = () => {
 
             <View style={styles.inputContainer}>
               <Input
-                  label="Email or Username"
-                  placeholder="example@gmail.com"
+                  label="Username"
+                  placeholder="Enter your username"
                   Icon={Mail}
                   value={username}
                   onChangeText={setUsername}
@@ -77,6 +78,10 @@ const Login = () => {
                   onChangeText={setPassword}
               />
             </View>
+
+            {errorMessage !== '' && (
+                <Text style={styles.errorText}>{errorMessage}</Text>
+            )}
 
             {loading ? (
                 <ActivityIndicator size="large" color="#007BFF" />
@@ -121,7 +126,15 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     gap: 16,
-    marginBottom: 26,
+    marginBottom: 10,
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 10,
+    marginBottom: 10,
+    fontSize: 14,
+    fontFamily: 'Roboto_400Regular',
   },
   bottom_text: {
     fontSize: 14,
