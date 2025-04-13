@@ -2,4 +2,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path('api/', include('parking.urls')),
+    path('api/', include('payments.urls')),
 ]
