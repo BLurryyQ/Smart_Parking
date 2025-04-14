@@ -1,73 +1,60 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Animated, Easing, StyleSheet } from 'react-native';
+import { View, Animated, Easing } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
+import { Platform } from 'react-native';
 
 const Donut = ({ progress, radius, strokeWidth, color }) => {
-  const animatedValue = useRef(new Animated.Value(0)).current;
+  const animated = useRef(new Animated.Value(0)).current;
+  const circumference = 2 * Math.PI * radius;
+  const halfCircle = radius + strokeWidth;
 
   useEffect(() => {
-    Animated.timing(animatedValue, {
+    Animated.timing(animated, {
       toValue: progress,
-      duration: 1000,
+      duration: 500,
       easing: Easing.linear,
       useNativeDriver: false,
     }).start();
   }, [progress]);
 
-  const circumference = 2 * Math.PI * radius;
-  const halfCircle = radius + strokeWidth;
-  const strokeDashoffset = animatedValue.interpolate({
+  const strokeDashoffset = animated.interpolate({
     inputRange: [0, 100],
     outputRange: [circumference, 0],
   });
 
   return (
-    <View style={{ width: radius * 2, height: radius * 2, alignItems: 'center', justifyContent: 'center' }}>
-      <View style={[
-          styles.circle,
-          {
-            width: radius * 2,
-            height: radius * 2,
-            borderRadius: radius,
-            borderWidth: strokeWidth,
-            borderColor: color,
-            transform: [{ rotate: '-90deg' }],
-            position: 'absolute',
-          },
-        ]} 
-      >
-        <Animated.View
-          style={[
-            styles.mask,
-            {
-              width: radius * 2,
-              height: radius * 2,
-              borderRadius: radius,
-              borderWidth: strokeWidth,
-              borderColor: color,
-              transform: [{ rotate: '90deg' }],
-              strokeDasharray: circumference,
-              strokeDashoffset: strokeDashoffset,
-            },
-          ]}
-        />
+      <View style={{ width: radius * 2, height: radius * 2 }}>
+        <Svg
+            width={radius * 2}
+            height={radius * 2}
+            viewBox={`0 0 ${halfCircle * 2} ${halfCircle * 2}`}
+        >
+          <Circle
+              stroke="#E6E7E8"
+              cx="50%"
+              cy="50%"
+              r={radius}
+              strokeWidth={strokeWidth}
+              fill="none"
+          />
+          <AnimatedCircle
+              stroke={color}
+              cx="50%"
+              cy="50%"
+              r={radius}
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              strokeDasharray={`${circumference}, ${circumference}`}
+              strokeDashoffset={strokeDashoffset}
+              fill="none"
+              rotation="-90"
+              originX="50%"
+              originY="50%"
+          />
+        </Svg>
       </View>
-    </View>
   );
 };
 
-const styles = StyleSheet.create({
-  circle: {
-    position: 'absolute',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderColor: '#E0E0E0',
-    padding: 10,
-  },
-  mask: {
-    position: 'absolute',
-    backgroundColor: 'transparent',
-    padding: 10,
-  },
-});
-
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 export default Donut;
