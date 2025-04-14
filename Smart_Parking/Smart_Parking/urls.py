@@ -24,5 +24,6 @@ urlpatterns = [
     path('api/reservations/', include('reservations.urls')),
     path('api/mobile-auth/', include('mobileAuth.urls')),
     path('api/booking/', include('booking.urls')),
+    path('api/reservations/', include('eTicket.urls')),
 ]
 

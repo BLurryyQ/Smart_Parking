@@ -2,6 +2,22 @@ from django.http import JsonResponse
 from bson import ObjectId
 from Smart_Parking.database import db
 from django.views.decorators.csrf import csrf_exempt
+from datetime import datetime
+
+def update_expired_reservations():
+    now = datetime.utcnow()
+    reservations = db['reservations']
+
+    expired = reservations.find({
+        'status': {'$in': ['active', 'pending']},
+        'dateFin': {'$lte': now}
+    })
+
+    for res in expired:
+        reservations.update_one(
+            {'_id': res['_id']},
+            {'$set': {'status': 'completed'}}
+        )
 
 def to_str_id(doc):
     if not doc:
@@ -11,6 +27,7 @@ def to_str_id(doc):
 @csrf_exempt
 def get_user_reservations(request, user_id):
     try:
+        update_expired_reservations()
         reservations_cursor = db.reservations.find({"userId": ObjectId(user_id)})
         reservations = []
 

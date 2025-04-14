@@ -4,27 +4,26 @@ from Smart_Parking.database import db
 from bson.objectid import ObjectId
 from datetime import datetime
 
-
 def parking_list(request):
-    if "user_id" not in request.session:  # Ensure user is logged in
+    if "user_id" not in request.session:
         return redirect("/login/")
 
-    parkings = list(db.parkingLots.find())  # Fetch all parking lots
+    parkings = list(db.parkingLots.find())
     for parking in parkings:
-        parking['id'] = str(parking['_id'])  # Convert ObjectId to string
-        del parking['_id']  # Remove _id to prevent conflicts in template
+        parking['id'] = str(parking['_id'])
+        del parking['_id']
 
     return render(request, 'parking/parking_list.html', {'parkings': parkings, 'segment': 'parking'})
 
 
 def add_parking(request):
-    if "user_id" not in request.session:  # Ensure user is logged in
+    if "user_id" not in request.session:
         return redirect("/login/")
 
     if request.method == 'POST':
-        # Get form data
+
         parking_data = {
-            "owner": request.POST.get('owner'),  # Added Owner field
+            "owner": request.POST.get('owner'),
             "nom": request.POST.get('nom'),
             "capaciteTotal": int(request.POST.get('capaciteTotal')),
             "placeDisponibles": int(request.POST.get('placeDisponibles')),
@@ -43,7 +42,7 @@ def add_parking(request):
             "updatedAt": datetime.utcnow()
         }
 
-        db.parkingLots.insert_one(parking_data)  # Insert into MongoDB
+        db.parkingLots.insert_one(parking_data)
         messages.success(request, "Parking lot added successfully!")
         return redirect('parking_list')
 
@@ -51,7 +50,7 @@ def add_parking(request):
 
 
 def update_parking(request, id):
-    if "user_id" not in request.session:  # Ensure user is logged in
+    if "user_id" not in request.session:
         return redirect("/login/")
 
     parking = db.parkingLots.find_one({"_id": ObjectId(id)})
@@ -61,7 +60,7 @@ def update_parking(request, id):
 
     if request.method == 'POST':
         update_data = {
-            "owner": request.POST.get('owner'),  # Added Owner field
+            "owner": request.POST.get('owner'),
             "nom": request.POST.get('nom'),
             "capaciteTotal": int(request.POST.get('capaciteTotal')),
             "placeDisponibles": int(request.POST.get('placeDisponibles')),
@@ -76,14 +75,13 @@ def update_parking(request, id):
                     float(request.POST.get('longitude'))
                 ] if request.POST.get('latitude') and request.POST.get('longitude') else parking["localisation"]["coordinates"]
             },
-            "updatedAt": datetime.utcnow()  # Ensure updatedAt is refreshed
+            "updatedAt": datetime.utcnow()
         }
 
-        db.parkingLots.update_one({"_id": ObjectId(id)}, {"$set": update_data})  # Update MongoDB
+        db.parkingLots.update_one({"_id": ObjectId(id)}, {"$set": update_data})
         messages.success(request, "Parking lot updated successfully!")
         return redirect('parking_list')
 
-    # Convert ObjectId to string for template use
     parking['id'] = str(parking['_id'])
     del parking['_id']
 
@@ -91,10 +89,10 @@ def update_parking(request, id):
 
 
 def delete_parking(request, id):
-    if "user_id" not in request.session:  # Ensure user is logged in
+    if "user_id" not in request.session:
         return redirect("/login/")
 
-    if request.method == 'POST':  # Only allow deletion via POST request
+    if request.method == 'POST':
         result = db.parkingLots.delete_one({"_id": ObjectId(id)})
         if result.deleted_count > 0:
             messages.success(request, "Parking lot deleted successfully.")

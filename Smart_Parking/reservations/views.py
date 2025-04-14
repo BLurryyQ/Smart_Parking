@@ -20,7 +20,9 @@ def reserve_parking_space(request):
         date_debut = data["dateDebut"]
         date_fin = data["dateFin"]
 
-        # Check 1: Validate Parking Lot
+        # === VALIDATIONS ===
+
+        # Check 1: Parking lot
         parking_lot = db.parkingLots.find_one({
             "_id": ObjectId(parking_lot_id),
             "status": "active"
@@ -28,7 +30,7 @@ def reserve_parking_space(request):
         if not parking_lot:
             return JsonResponse({"success": False, "error": "Invalid or inactive parking lot"}, status=400)
 
-        # Check 2: Validate Parking Space
+        # Check 2: Parking space
         space = db.parkingSpaces.find_one({
             "_id": ObjectId(space_id),
             "parkingLotId": ObjectId(parking_lot_id),
@@ -37,7 +39,7 @@ def reserve_parking_space(request):
         if not space:
             return JsonResponse({"success": False, "error": "Invalid or occupied parking space"}, status=400)
 
-        # Check 3: Validate User
+        # Check 3: User
         user = db.users.find_one({
             "_id": ObjectId(user_id),
             "isActive": True
@@ -45,7 +47,7 @@ def reserve_parking_space(request):
         if not user:
             return JsonResponse({"success": False, "error": "Invalid or inactive user"}, status=400)
 
-        # Check 4: Validate Vehicle
+        # Check 4: Vehicle
         vehicle = db.vehicles.find_one({
             "_id": ObjectId(vehicle_id),
             "userId": ObjectId(user_id),
@@ -54,31 +56,36 @@ def reserve_parking_space(request):
         if not vehicle:
             return JsonResponse({"success": False, "error": "Invalid or unverified vehicle"}, status=400)
 
-        # Check 5: Validate date and slot availability (optional: you can add additional logic here)
+        # === ALL VALIDATIONS PASSED ===
 
-        # Insert Reservation into Database
+        date_debut_dt = datetime.fromisoformat(date_debut)
+        date_fin_dt = datetime.fromisoformat(date_fin)
+        now = datetime.utcnow()
+
+        status = "pending" if date_debut_dt > now else "active"
+
         reservation = {
             "userId": ObjectId(user_id),
             "parkingLotId": ObjectId(parking_lot_id),
             "spaceId": ObjectId(space_id),
             "vehicleId": ObjectId(vehicle_id),
-            "dateDebut": datetime.fromisoformat(date_debut),
-            "dateFin": datetime.fromisoformat(date_fin),
-            "status": "active",
-            "createdAt": datetime.utcnow(),
-            "updatedAt": datetime.utcnow()
+            "dateDebut": date_debut_dt,
+            "dateFin": date_fin_dt,
+            "status": status,
+            "createdAt": now,
+            "updatedAt": now
         }
 
         result = db.reservations.insert_one(reservation)
 
-        # Update parking space status to "occupe"
+        # Update parking space to 'occupe'
         db.parkingSpaces.update_one(
             {"_id": ObjectId(space_id)},
             {
                 "$set": {
                     "status": "occupe",
                     "currentVehicle": ObjectId(vehicle_id),
-                    "lastStatusChange": datetime.utcnow()
+                    "lastStatusChange": now
                 }
             }
         )
@@ -90,5 +97,49 @@ def reserve_parking_space(request):
 
     except KeyError as e:
         return JsonResponse({"success": False, "error": f"Missing field: {str(e)}"}, status=400)
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+@csrf_exempt
+def cancel_reservation(request, reservation_id):
+    if request.method != "POST":
+        return JsonResponse({"error": "Invalid method"}, status=405)
+
+    try:
+        reservation = db.reservations.find_one({"_id": ObjectId(reservation_id)})
+
+        if not reservation:
+            return JsonResponse({"success": False, "error": "Reservation not found"}, status=404)
+
+        if reservation["status"] != "pending":
+            return JsonResponse({"success": False, "error": "Only pending reservations can be cancelled"}, status=400)
+
+        # Update the reservation status
+        db.reservations.update_one(
+            {"_id": ObjectId(reservation_id)},
+            {
+                "$set": {
+                    "status": "cancelled",
+                    "updatedAt": datetime.utcnow()
+                }
+            }
+        )
+
+        # Optionally free up the parking space
+        db.parkingSpaces.update_one(
+            {"_id": reservation["spaceId"]},
+            {
+                "$set": {
+                    "status": "libre",
+                    "lastStatusChange": datetime.utcnow()
+                },
+                "$unset": {
+                    "currentVehicle": ""
+                }
+            }
+        )
+
+        return JsonResponse({"success": True, "message": "Reservation cancelled successfully"})
+
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=500)
