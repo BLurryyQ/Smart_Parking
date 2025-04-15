@@ -10,11 +10,15 @@ import ThemeContext from '../../theme/ThemeContext';
 const Manual = () => {
   const { theme, darkMode, toggleTheme } = useContext(ThemeContext);
 
-  const back = () => {
-    router.push('location');
-  };
+    const back = () => {
+        if (router.canGoBack?.()) {
+            router.back();
+        } else {
+            router.push('location');
+        }
+    };
 
-  return (
+    return (
     <View style={[styles.container, {backgroundColor:theme.background}]}>
       <View style={styles.header}>
       <TouchableOpacity onPress={back}>

@@ -41,7 +41,11 @@ const Payment = () => {
 };
 
 const back = () => {
-  router.push('(screens)/review');
+    if (router.canGoBack?.()) {
+        router.back();
+    } else {
+        router.push('(screens)/review');
+    }
 };
 
   return (

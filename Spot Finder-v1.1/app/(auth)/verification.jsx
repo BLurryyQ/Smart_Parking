@@ -79,8 +79,13 @@ const Verification = () => {
     };
 
     const back = () => {
-        router.push('createAccount');
+        if (router.canGoBack?.()) {
+            router.back();
+        } else {
+            router.push('createAccount');
+        }
     };
+
 
     const maskedEmail = email ? email.replace(/(?<=.{3}).(?=.*@)/g, '*') : '';
 

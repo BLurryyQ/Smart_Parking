@@ -16,11 +16,17 @@ const AddNew = () => {
     const add_card = () => {
         router.push('(screens)/payment');
     };
+
     const back = () => {
-        router.push('(screens)/payment');
-      };
-    
-  return (
+        if (router.canGoBack?.()) {
+            router.back();
+        } else {
+            router.push('(screens)/payment');
+        }
+    };
+
+
+    return (
     <View style={[styles.container, {backgroundColor:theme.background}]}>
         <View style={styles.header}>
         <TouchableOpacity onPress={back}>

@@ -28,9 +28,15 @@ const BookSlot = () => {
     const vehicle = () => {
         router.push('(screens)/vehicle');
     }
+
     const back = () => {
-        router.push('(screens)/parkingDetails');
-      };
+        if (router.canGoBack?.()) {
+            router.back();
+        } else {
+            router.push('(screens)/parkingDetails');
+        }
+    };
+
     return (
         <View style={styles.details_page}>
             <Image source={Parking1} alt='image' style={styles.image} />

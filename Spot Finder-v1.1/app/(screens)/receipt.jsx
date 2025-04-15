@@ -7,16 +7,31 @@ import Dark_scan from "../../assets/images/dark_scan.png";
 import Button from '../../components/Button/Button';
 import ThemeContext from '../../theme/ThemeContext';
 import { router, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Receipt = () => {
   const { theme, darkMode } = useContext(ThemeContext);
   const { reservationId } = useLocalSearchParams();
   const [reservation, setReservation] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  const back = () => router.back();
+  const back = () => {
+    if (router.canGoBack?.()) {
+      router.back();
+    } else {
+      router.push('booking');
+    }
+  };
 
   useEffect(() => {
-    const fetchReservation = async () => {
+    const checkLoginAndFetchReservation = async () => {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        router.replace('login');
+        return;
+      }
+      setIsAuthenticated(true);
+
       try {
         const res = await fetch(`http://127.0.0.1:8000/api/reservations/${reservationId}/`);
         const data = await res.json();
@@ -26,12 +41,13 @@ const Receipt = () => {
       }
     };
 
-    if (reservationId) fetchReservation();
+    if (reservationId) checkLoginAndFetchReservation();
   }, [reservationId]);
 
-  const formatTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const formatTime = (iso) =>
+      new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  if (!reservation) {
+  if (!isAuthenticated || !reservation) {
     return <Text style={{ marginTop: 50, textAlign: 'center', color: theme.color }}>Loading...</Text>;
   }
 

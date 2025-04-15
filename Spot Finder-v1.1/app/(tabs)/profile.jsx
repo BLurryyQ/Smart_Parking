@@ -55,7 +55,11 @@ const Profile = () => {
   };
 
   const back = () => {
-    router.push('home');
+    if (router.canGoBack?.()) {
+      router.back();
+    } else {
+      router.push('home');
+    }
   };
 
   const wallet = () => {

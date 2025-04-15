@@ -11,9 +11,14 @@ import { router } from "expo-router";
 const Wallet = () => {
     const { theme, darkMode } = useContext(ThemeContext);
     const back = () => {
-        router.push('(screens)/extendParking');
-      };
-  return (
+        if (router.canGoBack?.()) {
+            router.back();
+        } else {
+            router.push('(screens)/extendParking');
+        }
+    };
+
+    return (
     <View style={[styles.container, {backgroundColor:theme.background}]}>
       <View style={styles.header}>
       <TouchableOpacity onPress={back}>

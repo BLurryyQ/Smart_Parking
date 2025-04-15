@@ -10,6 +10,7 @@ import Location from "../../assets/images/locate3.svg";
 import Button from '../../components/Button/Button';
 import ThemeContext from '../../theme/ThemeContext';
 import { router } from 'expo-router';
+import ReservationSkeleton from '../../components/Skeleton/ReservationSkeleton';
 
 const parkingImages = [
   require('../../assets/images/parking1.png'),
@@ -26,15 +27,20 @@ const Booking = () => {
   const [imageMap, setImageMap] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [loadingId, setLoadingId] = useState(null);
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
-    const fetchReservations = async () => {
-      setIsLoading(true);
-      const userId = await AsyncStorage.getItem('userId');
-      if (!userId) return;
+    const checkLoginAndFetchReservations = async () => {
+      const storedUserId = await AsyncStorage.getItem('userId');
+      if (!storedUserId) {
+        router.replace('login');
+        return;
+      }
+      setUserId(storedUserId);
 
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/booking/user-reservations/${userId}/`);
+        setIsLoading(true);
+        const res = await fetch(`http://127.0.0.1:8000/api/booking/user-reservations/${storedUserId}/`);
         const data = await res.json();
         if (data.success) {
           const imgMap = {};
@@ -50,7 +56,8 @@ const Booking = () => {
         setIsLoading(false);
       }
     };
-    fetchReservations();
+
+    checkLoginAndFetchReservations();
   }, []);
 
   const cancelReservation = async (reservationId) => {
@@ -61,7 +68,6 @@ const Booking = () => {
       });
       const data = await response.json();
       if (data.success) {
-        const userId = await AsyncStorage.getItem('userId');
         const res = await fetch(`http://127.0.0.1:8000/api/booking/user-reservations/${userId}/`);
         const newData = await res.json();
         if (newData.success) {
@@ -82,12 +88,20 @@ const Booking = () => {
     setLoadingId(null);
   };
 
-  const back = () => router.push('home');
-  const receipt = (id) => {
-    router.push({ pathname: '(screens)/receipt', params: { reservationId: id } });
+  const back = () => {
+    if (router.canGoBack?.()) {
+      router.back();
+    } else {
+      router.push('home');
+    }
   };
+
+  const receipt = (id) => {
+    router.push({ pathname: '(screens)/receipt', params: { reservationId: id, userId } });
+  };
+
   const timer = (id) => {
-    router.push({ pathname: '(screens)/timer', params: { reservationId: id } });
+    router.push({ pathname: '(screens)/timer', params: { reservationId: id, userId } });
   };
 
   const formatDuration = (start, end) => {
@@ -107,9 +121,7 @@ const Booking = () => {
   };
 
   const renderSkeletons = () => {
-    return [...Array(3)].map((_, i) => (
-        <View key={i} style={[styles.main_stack, { backgroundColor: '#e0e0e0', height: 130, borderRadius: 10 }]} />
-    ));
+    return [...Array(3)].map((_, i) => <ReservationSkeleton key={i} />);
   };
 
   return (

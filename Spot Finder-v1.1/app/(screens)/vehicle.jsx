@@ -22,9 +22,15 @@ const Vehicle = () => {
   const slot = () => {
     router.push('(screens)/parkingSlot');
   };
+
   const back = () => {
-    router.push('(screens)/bookSlot');
+    if (router.canGoBack?.()) {
+      router.back();
+    } else {
+      router.push('(screens)/bookSlot');
+    }
   };
+
   return (
     <View style={[styles.container, {backgroundColor:theme.background}]}>
       <View style={styles.header}>

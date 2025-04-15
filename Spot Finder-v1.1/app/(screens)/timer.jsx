@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View, Image, TouchableOpacity, Platform, ScrollView, ActivityIndicator } from 'react-native';
 import React, { useState, useEffect, useContext } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Back from "../../assets/images/Back.svg";
 import Dark_back from "../../assets/images/White_back.svg";
 import Car from "../../assets/images/car7.png";
@@ -15,9 +16,17 @@ const Timer = () => {
   const [loading, setLoading] = useState(true);
   const [remainingSeconds, setRemainingSeconds] = useState(0);
   const [progress, setProgress] = useState(100);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const fetchReservation = async () => {
+    const checkLoginAndFetch = async () => {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        router.replace('login');
+        return;
+      }
+      setIsAuthenticated(true);
+
       try {
         const response = await fetch(`http://127.0.0.1:8000/api/reservations/${reservationId}/`);
         const data = await response.json();
@@ -28,7 +37,8 @@ const Timer = () => {
         setLoading(false);
       }
     };
-    fetchReservation();
+
+    if (reservationId) checkLoginAndFetch();
   }, [reservationId]);
 
   useEffect(() => {
@@ -56,18 +66,23 @@ const Timer = () => {
     const hrs = Math.floor(secs / 3600);
     const mins = Math.floor((secs % 3600) / 60);
     const secsLeft = secs % 60;
-    return `${hrs.toString().padStart(2, '0')}:${mins
-        .toString()
-        .padStart(2, '0')}:${secsLeft.toString().padStart(2, '0')}`;
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secsLeft.toString().padStart(2, '0')}`;
   };
 
   const formatDate = (iso) => new Date(iso).toLocaleDateString();
   const formatHour = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  const back = () => router.push('booking');
+  const back = () => {
+    if (router.canGoBack?.()) {
+      router.back();
+    } else {
+      router.push('booking');
+    }
+  };
+
   const extend = () => router.push('(screens)/extendParking');
 
-  if (loading) {
+  if (!isAuthenticated || loading) {
     return (
         <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}>
           <ActivityIndicator size="large" color="#007BFF" />
@@ -77,7 +92,7 @@ const Timer = () => {
 
   if (!reservation) {
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}>
           <Text style={{ color: theme.color }}>Reservation not found</Text>
         </View>
     );

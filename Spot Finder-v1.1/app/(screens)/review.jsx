@@ -15,10 +15,16 @@ const Review = () => {
   const { theme, darkMode } = useContext(ThemeContext);
     const pay = () => {
       router.push('(screens)/payment');
-    };   
-    const back = () => {
-      router.push('(screens)/parkingSlot');
     };
+
+    const back = () => {
+        if (router.canGoBack?.()) {
+            router.back();
+        } else {
+            router.push('(screens)/parkingSlot');
+        }
+    };
+
   return (
     <View style={[styles.container, {backgroundColor:theme.background}]}>
         <View style={styles.header}>

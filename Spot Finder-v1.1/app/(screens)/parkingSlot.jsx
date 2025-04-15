@@ -37,9 +37,15 @@ const ParkingSlot = () => {
     const handleSlotPress4 = (id) => {
         setActiveSlot4(prevId => prevId === id ? null : id);
     };
+
     const back = () => {
-        router.push('(screens)/vehicle');
-      };
+        if (router.canGoBack?.()) {
+            router.back();
+        } else {
+            router.push('(screens)/vehicle');
+        }
+    };
+
     return (
         <View style={[styles.container, {backgroundColor:theme.background}]}>
             <View style={styles.header}>

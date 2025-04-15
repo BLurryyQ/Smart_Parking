@@ -33,9 +33,15 @@ const Extend = () => {
     const card = () => {
         router.push('(screens)/review');
     };
+
     const back = () => {
-        router.push('(screens)/timer');
-      };
+        if (router.canGoBack?.()) {
+            router.back();
+        } else {
+            router.push('(screens)/timer');
+        }
+    };
+
     return (
         <View style={[styles.container, {backgroundColor:theme.background}]}>
             

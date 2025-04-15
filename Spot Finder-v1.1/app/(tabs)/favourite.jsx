@@ -28,8 +28,13 @@ const Favourite = () => {
       setWishlist([...wishlist, id]);
     }
   };
+
   const back = () => {
-    router.push('home');
+      if (router.canGoBack?.()) {
+          router.back();
+      } else {
+          router.push('home');
+      }
   };
 
   const details = () => {

@@ -1,124 +1,156 @@
-import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView, Platform } from 'react-native';
-import React, { useContext, useState } from 'react';
-import Parking1 from "../../assets/images/parking1.png";
+import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView, Platform, ActivityIndicator } from 'react-native';
+import React, { useContext, useState, useEffect } from 'react';
+import { useLocalSearchParams, router } from 'expo-router';
 import Back from "../../assets/images/White_back.svg";
-import Dark_back from "../../assets/images/White_back.svg";
 import Star from "../../assets/images/Star.svg";
 import Car from "../../assets/images/car.svg";
 import Clock from "../../assets/images/clock.svg";
-import { Roboto_400Regular, Roboto_700Bold } from '@expo-google-fonts/roboto';
-import { Montserrat_600SemiBold, Montserrat_700Bold } from '@expo-google-fonts/montserrat';
 import Share from "../../assets/images/Locate.svg";
-import { tab_heading } from '../../Data/Data';
 import Profiles from "../../assets/images/profile_img.png";
 import Comment from "../../assets/images/comment.svg";
 import Call from "../../assets/images/call.svg";
 import Button from '../../components/Button/Button';
-import { router, Link } from "expo-router";
 import ThemeContext from '../../theme/ThemeContext';
+import { tab_heading } from '../../Data/Data';
 
 const ParkingDetails = () => {
-    const { theme, darkMode, toggleTheme } = useContext(ThemeContext);
+    const { parkingLotId } = useLocalSearchParams();
+    const { theme, darkMode } = useContext(ThemeContext);
     const [activeHeading, setActiveHeading] = useState(tab_heading[0].id);
+    const [parkingLot, setParkingLot] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    const click = (id) => {
-        setActiveHeading(id);
-    };
+    const click = (id) => setActiveHeading(id);
+    const slot = () => router.push('(screens)/bookSlot');
+    const back = () => router.canGoBack?.() ? router.back() : router.push('home');
 
-    const slot = () => {
-        router.push('(screens)/bookSlot');
-    };
-    const back = () => {
-        router.push('home');
-      };
-    
+    useEffect(() => {
+        const fetchDetails = async () => {
+            try {
+                const res = await fetch(`http://127.0.0.1:8000/api/parking_lots/${parkingLotId}/`);
+                const data = await res.json();
+                setParkingLot(data);
+            } catch (error) {
+                console.error("Failed to fetch parking lot details:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDetails();
+    }, [parkingLotId]);
+
+    if (loading) {
+        return (
+            <View style={[styles.details_page, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color="#007BFF" />
+            </View>
+        );
+    }
+
+    if (!parkingLot) {
+        return (
+            <View style={[styles.details_page, { justifyContent: 'center', alignItems: 'center' }]}>
+                <Text style={{ color: theme.color }}>Parking Lot not found.</Text>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.details_page}>
-            <Image source={Parking1} alt='image' style={styles.image} />
-            <View style={styles.header}>
-                <TouchableOpacity onPress={back}>
+            <Image source={require('../../assets/images/parking1.png')} style={styles.image} />
+            <TouchableOpacity onPress={back} style={styles.header}>
                 <Back />
-                </TouchableOpacity>
-            </View>
-            <View style={[styles.container, {backgroundColor: theme.background}]}>
-              
+            </TouchableOpacity>
+
+            <View style={[styles.container, { backgroundColor: theme.background }]}>
                 <ScrollView style={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
-                   <View style={styles.column}>
-                    <View>
-                    <View style={styles.review_row}>
-                    <Text style={styles.parking}>car parking</Text>
-                    <View style={styles.rating_row}>
-                        <Star />
-                        <Text style={styles.review}>4.9 (300 reviews) </Text>
-                    </View>
-                </View>
-                <View style={styles.title_row}>
-                    <Text style={[styles.title, {color:theme.color}]}>ParkSecure</Text>
-                    <Share />
-                </View>
-                <Text style={styles.title_text}>1012 Ocean Avanue, New York, USA</Text>
-                
-                    <View style={styles.heading_container}>
-                    {tab_heading.map((d) => (
-                        <TouchableOpacity
-                            key={d.id}
-                            style={[
-                                styles.heading_box,
-                                activeHeading === d.id && styles.active_heading_box,
-                            ]}
-                            onPress={() => click(d.id)}
-                        >
-                            <Text
-                                style={[
-                                    styles.head_text,
-                                    activeHeading === d.id && styles.active_head_text,
-                                ]}
-                            >
-                                {d.text}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-                    <View style={styles.timing_car}>
-                        <View style={styles.timing_row}>
-                            <Clock />
-                            <Text style={[styles.timing, {color:theme.color}]}>1hour</Text>
-                        </View>
-                        <View style={styles.car_row}>
-                            <Car />
-                            <Text style={[styles.car, {color:theme.color}]}>28 Spots</Text>
-                        </View>
-                    </View>
-                    <Text style={[styles.description, {color:theme.color}]}>Description</Text>
-                    <Text style={styles.description_text}>Welcome to Park Haven, the ultimate destination for secure, convenient, and affordable car parking. Whether you need a spot<Text style={styles.read}> Read more..</Text></Text>
-                    <Text style={[styles.description, {color:theme.color}]}>Operated By</Text>
-                    <View style={styles.profile_row}>
-                        <View style={styles.profile_left}>
-                            <Image style={styles.profile} source={Profiles} alt='profile' />
-                            <View style={styles.name_role}>
-                                <Text style={[styles.name, {color:theme.color}]}>john mac</Text>
-                                <Text style={styles.role}>Operater</Text>
+                    <View style={styles.column}>
+                        <View style={styles.review_row}>
+                            <Text style={styles.parking}>Car Parking</Text>
+                            <View style={styles.rating_row}>
+                                <Star />
+                                <Text style={styles.review}>4.9 (300 reviews)</Text>
                             </View>
                         </View>
-                        <View style={styles.icons_row}>
-                            <Comment />
-                            <Call />
+
+                        <View style={styles.title_row}>
+                            <Text style={[styles.title, { color: theme.color }]}>{parkingLot.nom}</Text>
+                            <Share />
                         </View>
-                    </View>
-                    </View>
-                    <View style={styles.price_row}>
-                        <View style={styles.price_content}>
-                            <Text style={[styles.price_title, {color:theme.color}]}>Total Price</Text>
-                            <Text style={styles.price}>$5.00 <Text style={styles.hour}> /1hr</Text></Text>
+                        <Text style={styles.title_text}>
+                            {parkingLot.localisation?.rue}, {parkingLot.localisation?.ville}, {parkingLot.localisation?.pays}
+                        </Text>
+
+                        <View style={styles.heading_container}>
+                            {tab_heading.map((d) => (
+                                <TouchableOpacity
+                                    key={d.id}
+                                    style={[
+                                        styles.heading_box,
+                                        activeHeading === d.id && styles.active_heading_box,
+                                    ]}
+                                    onPress={() => click(d.id)}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.head_text,
+                                            activeHeading === d.id && styles.active_head_text,
+                                        ]}
+                                    >
+                                        {d.text}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
                         </View>
-                        <Button buttonText="Book Slot" onPress={slot} />
-                    </View>
+
+                        <View style={styles.timing_car}>
+                            <View style={styles.timing_row}>
+                                <Clock />
+                                <Text style={[styles.timing, { color: theme.color }]}>1 hour</Text>
+                            </View>
+                            <View style={styles.car_row}>
+                                <Car />
+                                <Text style={[styles.car, { color: theme.color }]}>
+                                    {parkingLot.placeDisponibles} Spots
+                                </Text>
+                            </View>
+                        </View>
+
+                        <Text style={[styles.description, { color: theme.color }]}>Description</Text>
+                        <Text style={styles.description_text}>
+                            Welcome to {parkingLot.nom}, the ultimate destination for secure, convenient, and affordable car parking.
+                            Whether you need a spot for a short or long stay,
+                            <Text style={styles.read}> Read more..</Text>
+                        </Text>
+
+                        <Text style={[styles.description, { color: theme.color }]}>Operated By</Text>
+                        <View style={styles.profile_row}>
+                            <View style={styles.profile_left}>
+                                <Image style={styles.profile} source={Profiles} />
+                                <View style={styles.name_role}>
+                                    <Text style={[styles.name, { color: theme.color }]}>{parkingLot.owner || "John Mac"}</Text>
+                                    <Text style={styles.role}>Operator</Text>
+                                </View>
+                            </View>
+                            <View style={styles.icons_row}>
+                                <Comment />
+                                <Call />
+                            </View>
+                        </View>
+
+                        <View style={styles.price_row}>
+                            <View>
+                                <Text style={[styles.price_title, { color: theme.color }]}>Total Price</Text>
+                                <Text style={styles.price}>$5.00 <Text style={styles.hour}>/hr</Text></Text>
+                            </View>
+                            <Button buttonText="Book Slot" onPress={slot} />
+                        </View>
                     </View>
                 </ScrollView>
             </View>
         </View>
     );
-}
+};
 
 export default ParkingDetails;
 
