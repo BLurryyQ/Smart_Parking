@@ -2,7 +2,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, timezone
 from Smart_Parking.database import db
 
 @csrf_exempt
@@ -58,9 +58,9 @@ def reserve_parking_space(request):
 
         # === ALL VALIDATIONS PASSED ===
 
-        date_debut_dt = datetime.fromisoformat(date_debut)
-        date_fin_dt = datetime.fromisoformat(date_fin)
-        now = datetime.utcnow()
+        date_debut_dt = datetime.fromisoformat(date_debut).replace(tzinfo=timezone.utc)
+        date_fin_dt = datetime.fromisoformat(date_fin).replace(tzinfo=timezone.utc)
+        now = datetime.now(timezone.utc)
 
         status = "pending" if date_debut_dt > now else "active"
 

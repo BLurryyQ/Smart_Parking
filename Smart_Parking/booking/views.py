@@ -2,10 +2,10 @@ from django.http import JsonResponse
 from bson import ObjectId
 from Smart_Parking.database import db
 from django.views.decorators.csrf import csrf_exempt
-from datetime import datetime
+from datetime import datetime, timezone
 
 def update_expired_reservations():
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     reservations = db['reservations']
 
     expired = reservations.find({
