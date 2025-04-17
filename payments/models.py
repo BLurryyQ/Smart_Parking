@@ -1,4 +1,5 @@
 import datetime
+from bson import ObjectId
 from mongoengine import Document, EmbeddedDocument, fields
 
 
@@ -26,7 +27,7 @@ class ErrorDetails(EmbeddedDocument):
 
 
 class Payment(Document):
-    reservationId = fields.ObjectIdField(required=True)
+    reservationId = fields.StringField(default=lambda: str(ObjectId()), required=True)
     montant = fields.FloatField(required=True)
     devise = fields.StringField(choices=['EUR', 'USD', 'MAD'], required=True)
     methodePaiement = fields.EmbeddedDocumentField(MethodePaiement, required=True)
