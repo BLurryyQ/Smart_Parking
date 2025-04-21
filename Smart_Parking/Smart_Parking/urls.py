@@ -24,7 +24,9 @@ urlpatterns = [
     path('api/reservations/', include('reservations.urls')),
     path('api/mobile-auth/', include('mobileAuth.urls')),
     path('api/booking/', include('booking.urls')),
-    path('api/reservations/', include('eTicket.urls')),
+    path('api/eticket/', include('eTicket.urls')),
     path('api/parking_lots/', include('parkingLot.urls')),
+    path('api/vehicles/', include('vehicles.urls')),
+    path('api/recognize-plate/', include('ocr.urls')),
 ]
 

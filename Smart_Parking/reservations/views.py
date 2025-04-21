@@ -1,8 +1,8 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-import json
 from bson import ObjectId
 from datetime import datetime, timezone
+import json
 from Smart_Parking.database import db
 
 @csrf_exempt
@@ -20,9 +20,17 @@ def reserve_parking_space(request):
         date_debut = data["dateDebut"]
         date_fin = data["dateFin"]
 
+        # === DATE HANDLING ===
+        date_debut_dt = datetime.fromisoformat(date_debut).astimezone(timezone.utc)
+        date_fin_dt = datetime.fromisoformat(date_fin).astimezone(timezone.utc)
+        now = datetime.now(timezone.utc)
+
+        # Reject if dateDebut already passed
+        if date_debut_dt <= now:
+            return JsonResponse({"success": False, "error": "Reservation start time is in the past"}, status=400)
+
         # === VALIDATIONS ===
 
-        # Check 1: Parking lot
         parking_lot = db.parkingLots.find_one({
             "_id": ObjectId(parking_lot_id),
             "status": "active"
@@ -30,7 +38,6 @@ def reserve_parking_space(request):
         if not parking_lot:
             return JsonResponse({"success": False, "error": "Invalid or inactive parking lot"}, status=400)
 
-        # Check 2: Parking space
         space = db.parkingSpaces.find_one({
             "_id": ObjectId(space_id),
             "parkingLotId": ObjectId(parking_lot_id),
@@ -39,7 +46,6 @@ def reserve_parking_space(request):
         if not space:
             return JsonResponse({"success": False, "error": "Invalid or occupied parking space"}, status=400)
 
-        # Check 3: User
         user = db.users.find_one({
             "_id": ObjectId(user_id),
             "isActive": True
@@ -47,7 +53,6 @@ def reserve_parking_space(request):
         if not user:
             return JsonResponse({"success": False, "error": "Invalid or inactive user"}, status=400)
 
-        # Check 4: Vehicle
         vehicle = db.vehicles.find_one({
             "_id": ObjectId(vehicle_id),
             "userId": ObjectId(user_id),
@@ -56,13 +61,9 @@ def reserve_parking_space(request):
         if not vehicle:
             return JsonResponse({"success": False, "error": "Invalid or unverified vehicle"}, status=400)
 
-        # === ALL VALIDATIONS PASSED ===
+        # === STORE RESERVATION ===
 
-        date_debut_dt = datetime.fromisoformat(date_debut).replace(tzinfo=timezone.utc)
-        date_fin_dt = datetime.fromisoformat(date_fin).replace(tzinfo=timezone.utc)
-        now = datetime.now(timezone.utc)
-
-        status = "pending" if date_debut_dt > now else "active"
+        status = "pending"
 
         reservation = {
             "userId": ObjectId(user_id),
@@ -78,7 +79,7 @@ def reserve_parking_space(request):
 
         result = db.reservations.insert_one(reservation)
 
-        # Update parking space to 'occupe'
+        # Update parking space
         db.parkingSpaces.update_one(
             {"_id": ObjectId(space_id)},
             {
@@ -88,6 +89,12 @@ def reserve_parking_space(request):
                     "lastStatusChange": now
                 }
             }
+        )
+
+        # Update lastParked for the vehicle
+        db.vehicles.update_one(
+            {"_id": ObjectId(vehicle_id)},
+            {"$set": {"lastParked": date_debut_dt}}
         )
 
         return JsonResponse({

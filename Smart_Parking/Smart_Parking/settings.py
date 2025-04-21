@@ -43,6 +43,10 @@ INSTALLED_APPS = [
     'parking',
     'reservations',
     'mobileAuth',
+    'booking',
+    'eTicket',
+    'parkingLot',
+    'vehicles',
 ]
 
 MIDDLEWARE = [
@@ -142,3 +146,5 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'anaskelouch@gmail.com'
 EMAIL_HOST_PASSWORD = 'ucia axpn vaff zwkc'
+
+APPEND_SLASH = True
