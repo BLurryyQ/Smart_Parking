@@ -14,14 +14,17 @@ import ThemeContext from '../../theme/ThemeContext';
 import { tab_heading } from '../../Data/Data';
 
 const ParkingDetails = () => {
-    const { parkingLotId } = useLocalSearchParams();
+    const { parkingLotId, userId } = useLocalSearchParams();
     const { theme, darkMode } = useContext(ThemeContext);
     const [activeHeading, setActiveHeading] = useState(tab_heading[0].id);
     const [parkingLot, setParkingLot] = useState(null);
     const [loading, setLoading] = useState(true);
 
+
     const click = (id) => setActiveHeading(id);
-    const slot = () => router.push('(screens)/bookSlot');
+    const slot = () => {
+        router.push({ pathname: '(screens)/bookSlot', params: { parkingLotId, userId } });
+    };
     const back = () => router.canGoBack?.() ? router.back() : router.push('home');
 
     useEffect(() => {

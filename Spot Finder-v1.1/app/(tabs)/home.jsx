@@ -9,12 +9,12 @@ import Star from "../../assets/images/Star.svg";
 import Heart from "../../assets/images/empty_heart.svg";
 import HeartFilled from "../../assets/images/filled_heart.svg";
 import Car from "../../assets/images/car.svg";
-import Clock from "../../assets/images/clock.svg";
+import Cars from '../../assets/images/Cars.svg';
 import { router } from "expo-router";
 import ThemeContext from '../../theme/ThemeContext';
 import Dark_Locate from "../../assets/images/dark_locate2.svg";
+import HomeSkeleton from '../../components/Skeleton/HomeSkeleton';
 
-// Random parking images
 const parkingImages = [
     require('../../assets/images/parking1.png'),
     require('../../assets/images/parking2.png'),
@@ -23,52 +23,66 @@ const parkingImages = [
     require('../../assets/images/parking5.png'),
 ];
 
+const FAVORITES_KEY = 'favorite_parkings';
+
 const Home = () => {
     const { theme, darkMode } = useContext(ThemeContext);
     const [wishlist, setWishlist] = useState([]);
-    const [wishlist2, setWishlist2] = useState([]);
     const [userLocation, setUserLocation] = useState("Your Location");
     const [parkings, setParkings] = useState([]);
     const [imageMap, setImageMap] = useState({});
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const loadLocation = async () => {
+        const loadInitialData = async () => {
             try {
                 const storedLocation = await AsyncStorage.getItem("location");
                 if (storedLocation) {
                     const parsed = JSON.parse(storedLocation);
                     setUserLocation(`${parsed.city || "Unknown City"}, ${parsed.country || "Unknown Country"}`);
                 }
-            } catch (err) {
-                console.error("Error loading location:", err);
-            }
-        };
 
-        const fetchParkings = async () => {
+                const storedFavorites = await AsyncStorage.getItem(FAVORITES_KEY);
+                if (storedFavorites) {
+                    setWishlist(JSON.parse(storedFavorites));
+                }
+            } catch (err) {
+                console.error("Initialization error:", err);
+            }
+
             try {
+                setLoading(true);
                 const res = await fetch("http://127.0.0.1:8000/api/parking_lots/");
                 const data = await res.json();
+
+                const shuffledImages = [...parkingImages].sort(() => 0.5 - Math.random());
                 const imgMap = {};
-                data.forEach(p => {
-                    imgMap[p._id] = parkingImages[Math.floor(Math.random() * parkingImages.length)];
+                let imageIndex = 0;
+
+                data.forEach((p) => {
+                    imgMap[p._id] = shuffledImages[imageIndex];
+                    imageIndex = (imageIndex + 1) % shuffledImages.length;
                 });
+
                 setImageMap(imgMap);
                 setParkings(data);
             } catch (err) {
                 console.error("Failed to fetch parkings:", err);
+            } finally {
+                setLoading(false);
             }
         };
 
-        loadLocation();
-        fetchParkings();
+        loadInitialData();
     }, []);
 
-    const toggleWishlist = (id) => {
-        setWishlist(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-    };
+    const toggleWishlist = async (id) => {
+        const updated = wishlist.includes(id)
+            ? wishlist.filter(i => i !== id)
+            : [...wishlist, id];
 
-    const toggleWishlist2 = (id) => {
-        setWishlist2(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+        setWishlist(updated);
+        await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
     };
 
     const details = (id) => {
@@ -91,45 +105,92 @@ const Home = () => {
                 </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-                <View style={styles.input_container}>
-                    <View style={styles.search}><Search /></View>
-                    <TextInput
-                        style={[styles.input, { backgroundColor: theme.cardbg, color: theme.color }]}
-                        placeholderTextColor={darkMode ? "#f6f6f6" : "#505050"}
-                        placeholder='Search'
-                    />
-                    <View style={styles.mic}><Mic /></View>
-                </View>
+            {loading ? <HomeSkeleton count={3} /> : (
+                <ScrollView showsVerticalScrollIndicator={false}>
+                    <View style={styles.input_container}>
+                        <View style={styles.search}>
+                            <Search width={20} height={20} />
+                        </View>
+                        <TextInput
+                            style={[styles.input, { backgroundColor: 'transparent', color: theme.color }]}
+                            placeholderTextColor={darkMode ? "#ccc" : "#757575"}
+                            placeholder='Search'
+                        />
+                        <View style={styles.mic}>
+                            <Mic width={20} height={20} />
+                        </View>
+                    </View>
 
-                <View style={styles.row}>
-                    <Text style={[styles.row_heading, { color: theme.color }]}>Popular Parking</Text>
-                    <Text style={styles.view}>See All</Text>
-                </View>
+                    <View style={styles.row}>
+                        <Text style={[styles.row_heading, { color: theme.color }]}>Popular Parking</Text>
+                        <Text style={styles.view}>See All</Text>
+                    </View>
 
-                <ScrollView horizontal={true} style={styles.horizontal_scroll} showsHorizontalScrollIndicator={false}>
-                    <View style={styles.popular_container}>
-                        {parkings.map((p) => (
-                            <TouchableOpacity key={p._id} style={[styles.popular_box, { backgroundColor: theme.cardbg }]} onPress={() => details(p._id)}>
-                                <Image source={imageMap[p._id]} style={styles.image} />
-                                <View style={styles.top_row}>
-                                    <View style={styles.rating_row}>
-                                        <Star />
-                                        <Text style={styles.rating}>4.9</Text>
+                    <ScrollView horizontal={true} style={styles.horizontal_scroll} showsHorizontalScrollIndicator={false}>
+                        <View style={styles.popular_container}>
+                            {parkings.map((p) => (
+                                <TouchableOpacity key={p._id} style={[styles.popular_box, { backgroundColor: theme.cardbg }]} onPress={() => details(p._id)}>
+                                    <Image source={imageMap[p._id]} style={styles.image} />
+                                    <View style={styles.top_row}>
+                                        <View style={styles.rating_row}>
+                                            <Star />
+                                            <Text style={styles.rating}>4.9</Text>
+                                        </View>
+                                        <TouchableOpacity onPress={() => toggleWishlist(p._id)} style={styles.wishlist_container}>
+                                            {wishlist.includes(p._id) ? <HeartFilled /> : <Heart />}
+                                        </TouchableOpacity>
                                     </View>
-                                    <TouchableOpacity onPress={() => toggleWishlist(p._id)} style={styles.wishlist_container}>
+                                    <View style={styles.card_body}>
+                                        <Text style={styles.parking}>Car Parking</Text>
+                                        <View style={styles.name_price}>
+                                            <Text style={[styles.name, { color: theme.color }]}>{p.nom}</Text>
+                                            <Text style={styles.price}>$5.00 <Text style={styles.time}>/hr</Text></Text>
+                                        </View>
+                                        <View style={styles.timing_car}>
+                                            <View style={styles.timing_row}>
+                                                <Cars />
+                                                <Text style={[styles.timing, { color: theme.color }]}>{p.capaciteTotal} total</Text>
+                                            </View>
+                                            <View style={styles.car_row}>
+                                                <Car />
+                                                <Text style={[styles.car, { color: theme.color }]}>{p.placeDisponibles} spots</Text>
+                                            </View>
+                                        </View>
+                                    </View>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </ScrollView>
+
+                    <View style={styles.row}>
+                        <Text style={[styles.row_heading, { color: theme.color }]}>Nearby Parking</Text>
+                        <Text style={styles.view}>See All</Text>
+                    </View>
+
+                    <View style={styles.stack_container}>
+                        {parkings.map((p) => (
+                            <TouchableOpacity key={p._id} style={[styles.stack, { backgroundColor: theme.cardbg }]} onPress={() => details(p._id)}>
+                                <View style={styles.imageContainer}>
+                                    <Image source={imageMap[p._id]} style={styles.stack_img} />
+                                    <TouchableOpacity onPress={() => toggleWishlist(p._id)} style={styles.wishlist_container2}>
                                         {wishlist.includes(p._id) ? <HeartFilled /> : <Heart />}
                                     </TouchableOpacity>
                                 </View>
-                                <View style={styles.card_body}>
-                                    <Text style={styles.parking}>Car Parking</Text>
-                                    <View style={styles.name_price}>
+                                <View style={styles.stack_body}>
+                                    <View style={styles.stack_body_row}>
+                                        <Text style={styles.parking}>Car Parking</Text>
+                                        <View style={styles.rating_row}>
+                                            <Star />
+                                            <Text style={styles.rating}>4.9</Text>
+                                        </View>
+                                    </View>
+                                    <View style={styles.name_price2}>
                                         <Text style={[styles.name, { color: theme.color }]}>{p.nom}</Text>
                                         <Text style={styles.price}>$5.00 <Text style={styles.time}>/hr</Text></Text>
                                     </View>
-                                    <View style={styles.timing_car}>
+                                    <View style={styles.timing_car2}>
                                         <View style={styles.timing_row}>
-                                            <Clock />
+                                            <Cars />
                                             <Text style={[styles.timing, { color: theme.color }]}>{p.capaciteTotal} total</Text>
                                         </View>
                                         <View style={styles.car_row}>
@@ -142,48 +203,7 @@ const Home = () => {
                         ))}
                     </View>
                 </ScrollView>
-
-                <View style={styles.row}>
-                    <Text style={[styles.row_heading, { color: theme.color }]}>Nearby Parking</Text>
-                    <Text style={styles.view}>See All</Text>
-                </View>
-
-                <View style={styles.stack_container}>
-                    {parkings.map((p) => (
-                        <TouchableOpacity key={p._id} style={[styles.stack, { backgroundColor: theme.cardbg }]} onPress={() => details(p._id)}>
-                            <View style={styles.imageContainer}>
-                                <Image source={imageMap[p._id]} style={styles.stack_img} />
-                                <TouchableOpacity onPress={() => toggleWishlist2(p._id)} style={styles.wishlist_container2}>
-                                    {wishlist2.includes(p._id) ? <HeartFilled /> : <Heart />}
-                                </TouchableOpacity>
-                            </View>
-                            <View style={styles.stack_body}>
-                                <View style={styles.stack_body_row}>
-                                    <Text style={styles.parking}>Car Parking</Text>
-                                    <View style={styles.rating_row}>
-                                        <Star />
-                                        <Text style={styles.rating}>4.9</Text>
-                                    </View>
-                                </View>
-                                <View style={styles.name_price2}>
-                                    <Text style={[styles.name, { color: theme.color }]}>{p.nom}</Text>
-                                    <Text style={styles.price}>$5.00 <Text style={styles.time}>/hr</Text></Text>
-                                </View>
-                                <View style={styles.timing_car2}>
-                                    <View style={styles.timing_row}>
-                                        <Clock />
-                                        <Text style={[styles.timing, { color: theme.color }]}>{p.capaciteTotal} total</Text>
-                                    </View>
-                                    <View style={styles.car_row}>
-                                        <Car />
-                                        <Text style={[styles.car, { color: theme.color }]}>{p.placeDisponibles} spots</Text>
-                                    </View>
-                                </View>
-                            </View>
-                        </TouchableOpacity>
-                    ))}
-                </View>
-            </ScrollView>
+            )}
         </View>
     );
 };
@@ -229,25 +249,28 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     input_container: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F6F6F6',
+        borderRadius: 12,
+        paddingHorizontal: 12,
+        paddingVertical: Platform.OS === 'web' ? 10 : 14,
         marginVertical: 16,
     },
+
     input: {
-        borderRadius: 12,
-        backgroundColor: '#F6F6F6',
-        paddingVertical: 14,
-        paddingHorizontal: 40,
+        flex: 1,
         fontSize: 14,
+        paddingLeft: 8,
+        color: '#121212',
     },
+
     search: {
-        position: 'absolute',
-        zIndex: 100,
-        bottom: 18,
-        left: 12,
+        marginRight: 8,
     },
+
     mic: {
-        position: 'absolute',
-        bottom: 18,
-        right: 12,
+        marginLeft: 8,
     },
     row: {
         flexDirection: 'row',

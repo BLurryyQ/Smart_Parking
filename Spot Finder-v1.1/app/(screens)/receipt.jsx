@@ -33,7 +33,7 @@ const Receipt = () => {
       setIsAuthenticated(true);
 
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/reservations/${reservationId}/`);
+        const res = await fetch(`http://127.0.0.1:8000/api/eticket/${reservationId}/`);
         const data = await res.json();
         setReservation(data);
       } catch (err) {
@@ -44,8 +44,10 @@ const Receipt = () => {
     if (reservationId) checkLoginAndFetchReservation();
   }, [reservationId]);
 
-  const formatTime = (iso) =>
-      new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const formatTime = (iso) => {
+    const date = new Date(new Date(iso).getTime() + 3600000); // +1 hour
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
 
   if (!isAuthenticated || !reservation) {
     return <Text style={{ marginTop: 50, textAlign: 'center', color: theme.color }}>Loading...</Text>;

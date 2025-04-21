@@ -28,7 +28,7 @@ const Timer = () => {
       setIsAuthenticated(true);
 
       try {
-        const response = await fetch(`http://127.0.0.1:8000/api/reservations/${reservationId}/`);
+        const response = await fetch(`http://127.0.0.1:8000/api/eticket/${reservationId}/`);
         const data = await response.json();
         setReservation(data);
       } catch (err) {
@@ -44,13 +44,13 @@ const Timer = () => {
   useEffect(() => {
     if (!reservation) return;
 
-    const endTime = new Date(reservation.dateFin).getTime();
-    const startTime = new Date(reservation.dateDebut).getTime();
-    const totalSeconds = Math.floor((endTime - startTime) / 1000);
+    const end = new Date(new Date(reservation.dateFin).getTime() + 3600000);
+    const start = new Date(new Date(reservation.dateDebut).getTime() + 3600000);
+    const totalSeconds = Math.floor((end - start) / 1000);
 
     const interval = setInterval(() => {
       const now = new Date().getTime();
-      const secondsLeft = Math.max(Math.floor((endTime - now) / 1000), 0);
+      const secondsLeft = Math.max(Math.floor((end - now) / 1000), 0);
       const currentProgress = (secondsLeft / totalSeconds) * 100;
 
       setRemainingSeconds(secondsLeft);
@@ -69,15 +69,18 @@ const Timer = () => {
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secsLeft.toString().padStart(2, '0')}`;
   };
 
-  const formatDate = (iso) => new Date(iso).toLocaleDateString();
-  const formatHour = (iso) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const formatDate = (iso) =>
+      new Date(new Date(iso).getTime() + 3600000).toLocaleDateString();
+
+  const formatHour = (iso) =>
+      new Date(new Date(iso).getTime() + 3600000).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
 
   const back = () => {
-    if (router.canGoBack?.()) {
-      router.back();
-    } else {
-      router.push('booking');
-    }
+    if (router.canGoBack?.()) router.back();
+    else router.push('booking');
   };
 
   const extend = () => router.push('(screens)/extendParking');
@@ -110,62 +113,60 @@ const Timer = () => {
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrolls}>
-          <View>
-            <View style={styles.top_container}>
-              <View style={styles.donutContainer}>
-                <Donut progress={progress} radius={60} strokeWidth={10} color="#007BFF" />
-                <Image source={Car} alt='image' style={styles.car} />
+          <View style={styles.top_container}>
+            <View style={styles.donutContainer}>
+              <Donut progress={progress} radius={60} strokeWidth={10} color="#007BFF" />
+              <Image source={Car} style={styles.car} />
+            </View>
+            <View style={styles.timer_container}>
+              <Text style={[styles.number, { color: theme.color }]}>{formatTime(remainingSeconds)}</Text>
+            </View>
+            <Text style={styles.text}>Remaining Parking Time</Text>
+            <View style={styles.hr}></View>
+          </View>
+
+          <View style={styles.time_data_container}>
+            <View style={styles.row}>
+              <View style={styles.column}>
+                <Text style={styles.text}>Parking</Text>
+                <Text style={[styles.value, { color: theme.color }]}>{parkingLot.nom}</Text>
               </View>
-              <View style={styles.timer_container}>
-                <Text style={[styles.number, { color: theme.color }]}>{formatTime(remainingSeconds)}</Text>
+              <View style={styles.column}>
+                <Text style={styles.text2}>Vehicle Number Plate</Text>
+                <Text style={[styles.value2, { color: theme.color }]}>{vehicle?.plateNumber}</Text>
               </View>
-              <Text style={styles.text}>Remaining Parking Time</Text>
-              <View style={styles.hr}></View>
             </View>
 
-            <View style={styles.time_data_container}>
-              <View style={styles.row}>
-                <View style={styles.column}>
-                  <Text style={styles.text}>Parking</Text>
-                  <Text style={[styles.value, { color: theme.color }]}>{parkingLot.nom}</Text>
-                </View>
-                <View style={styles.column}>
-                  <Text style={styles.text2}>Vehicle Number Plate</Text>
-                  <Text style={[styles.value2, { color: theme.color }]}>{vehicle?.plateNumber}</Text>
-                </View>
+            <View style={styles.row}>
+              <View style={styles.column}>
+                <Text style={styles.text}>Location</Text>
+                <Text style={[styles.value, { color: theme.color }]}>{parkingLot.localisation?.ville}</Text>
               </View>
-
-              <View style={styles.row}>
-                <View style={styles.column}>
-                  <Text style={styles.text}>Location</Text>
-                  <Text style={[styles.value, { color: theme.color }]}>{parkingLot.localisation?.ville}</Text>
-                </View>
-                <View style={styles.column}>
-                  <Text style={styles.text2}>Parking Slot</Text>
-                  <Text style={[styles.value2, { color: theme.color }]}>{space?.numero}</Text>
-                </View>
+              <View style={styles.column}>
+                <Text style={styles.text2}>Parking Slot</Text>
+                <Text style={[styles.value2, { color: theme.color }]}>{space?.numero}</Text>
               </View>
+            </View>
 
-              <View style={styles.row}>
-                <View style={styles.column}>
-                  <Text style={styles.text}>Arrive Time</Text>
-                  <Text style={[styles.value, { color: theme.color }]}>{formatHour(dateDebut)}</Text>
-                </View>
-                <View style={styles.column}>
-                  <Text style={styles.text2}>Exit Time</Text>
-                  <Text style={[styles.value2, { color: theme.color }]}>{formatHour(dateFin)}</Text>
-                </View>
+            <View style={styles.row}>
+              <View style={styles.column}>
+                <Text style={styles.text}>Arrive Time</Text>
+                <Text style={[styles.value, { color: theme.color }]}>{formatHour(dateDebut)}</Text>
               </View>
+              <View style={styles.column}>
+                <Text style={styles.text2}>Exit Time</Text>
+                <Text style={[styles.value2, { color: theme.color }]}>{formatHour(dateFin)}</Text>
+              </View>
+            </View>
 
-              <View style={styles.row}>
-                <View style={styles.column}>
-                  <Text style={styles.text}>Date</Text>
-                  <Text style={[styles.value, { color: theme.color }]}>{formatDate(dateDebut)}</Text>
-                </View>
-                <View style={styles.column}>
-                  <Text style={styles.text2}>Total Payment</Text>
-                  <Text style={[styles.value2, { color: theme.color }]}>$64.00</Text>
-                </View>
+            <View style={styles.row}>
+              <View style={styles.column}>
+                <Text style={styles.text}>Date</Text>
+                <Text style={[styles.value, { color: theme.color }]}>{formatDate(dateDebut)}</Text>
+              </View>
+              <View style={styles.column}>
+                <Text style={styles.text2}>Total Payment</Text>
+                <Text style={[styles.value2, { color: theme.color }]}>$64.00</Text>
               </View>
             </View>
           </View>
@@ -206,7 +207,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 30,
-    position: 'relative',
     borderBottomColor: '#BABABA',
     borderBottomWidth: 2,
     borderStyle: 'dashed',
@@ -230,49 +230,39 @@ const styles = StyleSheet.create({
   },
   number: {
     fontSize: 30,
-    lineHeight: 40,
     fontFamily: 'Montserrat_600SemiBold',
-    color: '#000000',
+    color: '#000',
   },
   text: {
     fontSize: 18,
-    lineHeight: 28,
     fontFamily: 'Roboto_400Regular',
     color: '#757575',
-    textTransform: 'capitalize',
-  },
-  time_data_container: {},
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  column: {
-    gap: 15,
-    width: '42%',
-  },
-  value: {
-    fontSize: 16,
-    lineHeight: 26,
-    fontFamily: 'Roboto_700Bold',
-    color: '#121212',
-    textTransform: 'capitalize',
   },
   text2: {
     fontSize: 14,
-    lineHeight: 24,
     fontFamily: 'Roboto_400Regular',
     color: '#757575',
-    textTransform: 'capitalize',
+  },
+  value: {
+    fontSize: 16,
+    fontFamily: 'Roboto_700Bold',
+    color: '#121212',
   },
   value2: {
     fontSize: 16,
-    lineHeight: 26,
     fontFamily: 'Roboto_700Bold',
     color: '#121212',
-    textTransform: 'capitalize',
     textAlign: 'left',
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginVertical: 10,
+  },
+  column: {
+    gap: 10,
+    width: '45%',
   },
   button_box: {
     marginBottom: Platform.OS === 'web' ? 10 : '10%',

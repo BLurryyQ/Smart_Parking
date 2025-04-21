@@ -77,10 +77,6 @@ const Location = () => {
         );
     };
 
-    const manual = () => {
-        router.push('manualLocation');
-    };
-
     return (
         <View style={[styles.container, { backgroundColor: theme.background }]}>
             <View style={styles.content}>
@@ -90,13 +86,6 @@ const Location = () => {
             </View>
             <View style={styles.button_container}>
                 <Button buttonText="Allow Location Access" onPress={handleAllowLocation} />
-                <Button
-                    buttonText="Enter Location Manually"
-                    textColor="#FF95AE"
-                    borderColor="#FF95AE"
-                    backgroundColor="transparent"
-                    onPress={manual}
-                />
             </View>
         </View>
     );

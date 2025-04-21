@@ -44,8 +44,17 @@ const Booking = () => {
         const data = await res.json();
         if (data.success) {
           const imgMap = {};
+          const parkingImageCache = {};
+
           data.reservations.forEach(r => {
-            imgMap[r._id] = parkingImages[Math.floor(Math.random() * parkingImages.length)];
+            const parkingId = r.parkingLot._id;
+            if (!parkingImageCache[parkingId]) {
+              // Use a deterministic index based on the parking ID hash
+              const hash = [...parkingId].reduce((acc, char) => acc + char.charCodeAt(0), 0);
+              const imageIndex = hash % parkingImages.length;
+              parkingImageCache[parkingId] = parkingImages[imageIndex];
+            }
+            imgMap[r._id] = parkingImageCache[parkingId];
           });
           setImageMap(imgMap);
           setReservations(data.reservations);
@@ -72,8 +81,17 @@ const Booking = () => {
         const newData = await res.json();
         if (newData.success) {
           const imgMap = {};
-          newData.reservations.forEach(r => {
-            imgMap[r._id] = parkingImages[Math.floor(Math.random() * parkingImages.length)];
+          const parkingImageCache = {};
+
+          data.reservations.forEach(r => {
+            const parkingId = r.parkingLot._id;
+            if (!parkingImageCache[parkingId]) {
+              // Use a deterministic index based on the parking ID hash
+              const hash = [...parkingId].reduce((acc, char) => acc + char.charCodeAt(0), 0);
+              const imageIndex = hash % parkingImages.length;
+              parkingImageCache[parkingId] = parkingImages[imageIndex];
+            }
+            imgMap[r._id] = parkingImageCache[parkingId];
           });
           setImageMap(imgMap);
           setReservations(newData.reservations);

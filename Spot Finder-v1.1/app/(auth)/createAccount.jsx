@@ -5,7 +5,6 @@ import Mail from "../../assets/images/mail.svg";
 import Lock from "../../assets/images/lock.svg";
 import Phone from "../../assets/images/phone.svg";
 import Button from '../../components/Button/Button';
-import { log_methods } from '../../Data/Data';
 import { router, Link } from "expo-router";
 import ThemeContext from '../../theme/ThemeContext';
 import Input from '../../components/Input/Input';
@@ -99,15 +98,6 @@ const CreateAccount = () => {
                             <Button buttonText="Create Account" onPress={verify} />
                         )}
 
-                        <Text style={styles.or}>Or Using other Method</Text>
-                        <View style={styles.tab_container}>
-                            {log_methods.map((d) => (
-                                <TouchableOpacity style={styles.tab} key={d.id}>
-                                    {darkMode ? d.dark_image : d.image}
-                                    <Text style={[styles.tab_text, { color: theme.color }]}>{d.text}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
                     </View>
 
                     <Text style={[styles.bottom_text, { color: theme.color }]}>

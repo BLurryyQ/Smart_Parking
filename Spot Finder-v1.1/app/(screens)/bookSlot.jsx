@@ -1,76 +1,113 @@
-import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView, Platform } from 'react-native';
-import React, { useContext, useState } from 'react';
-import Parking1 from "../../assets/images/parking1.png";
+import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView, Platform, ActivityIndicator } from 'react-native';
+import React, { useContext, useEffect, useState } from 'react';
+import { useLocalSearchParams, router } from 'expo-router';
 import Back from "../../assets/images/White_back.svg";
-import Dark_back from "../../assets/images/White_back.svg";
 import Star from "../../assets/images/Star.svg";
 import Share from "../../assets/images/Locate.svg";
-import { Montserrat_500Medium, Montserrat_600SemiBold } from '@expo-google-fonts/montserrat';
+import Dark_back from "../../assets/images/White_back.svg";
 import CustomCalendar from '../../components/CustomCalendar/CustomCalendar';
 import { time_tab } from '../../Data/Data';
 import Button from '../../components/Button/Button';
-import { router, Link } from "expo-router";
 import ThemeContext from '../../theme/ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const BookSlot = () => {
-    const { theme, darkMode, toggleTheme } = useContext(ThemeContext);
+    const { theme, darkMode } = useContext(ThemeContext);
+    const { userId, parkingLotId } = useLocalSearchParams();
     const [activetab, setActivetab] = useState(time_tab[0].id);
-    const [activetab2, setActivetab2] = useState(time_tab[0].id);
+    const [activetab2, setActivetab2] = useState(time_tab[1].id);
+    const [selectedDate, setSelectedDate] = useState(null);
+    const [parkingLot, setParkingLot] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-    const set_tab = (id) => {
-        setActivetab(id);
+    const set_tab = (id) => setActivetab(id);
+    const set_tab2 = (id) => setActivetab2(id);
+
+    const arrivalTime = time_tab.find(t => t.id === activetab)?.time || '';
+    const exitTime = time_tab.find(t => t.id === activetab2)?.time || '';
+
+    const vehicle = async () => {
+        const userData = await AsyncStorage.getItem('user');
+        const parsed = JSON.parse(userData);
+        const userId = parsed._id;
+
+        router.push({
+            pathname: '(screens)/vehicle',
+            params: {
+                userId: userId,
+                parkingLotId,
+                startTime: time_tab.find(t => t.id === activetab)?.time,
+                endTime: time_tab.find(t => t.id === activetab2)?.time,
+            },
+        });
     };
-
-    const set_tab2 = (id) => {
-        setActivetab2(id);
-    };
-
-    const vehicle = () => {
-        router.push('(screens)/vehicle');
-    }
 
     const back = () => {
-        if (router.canGoBack?.()) {
-            router.back();
-        } else {
-            router.push('(screens)/parkingDetails');
-        }
+        router.canGoBack?.() ? router.back() : router.push('home');
     };
+
+    useEffect(() => {
+        const fetchParkingLot = async () => {
+            try {
+                const res = await fetch(`http://127.0.0.1:8000/api/parking_lots/${parkingLotId}/`);
+                const data = await res.json();
+                setParkingLot(data);
+            } catch (err) {
+                console.error("Failed to fetch parking lot details", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchParkingLot();
+    }, [parkingLotId]);
+
+    if (loading) {
+        return (
+            <View style={[styles.details_page, { justifyContent: 'center', alignItems: 'center' }]}>
+                <ActivityIndicator size="large" color="#007BFF" />
+            </View>
+        );
+    }
 
     return (
         <View style={styles.details_page}>
-            <Image source={Parking1} alt='image' style={styles.image} />
+            <Image source={require('../../assets/images/parking1.png')} alt="image" style={styles.image} />
             <View style={styles.header}>
-            <TouchableOpacity onPress={back}>
-       {darkMode? <Dark_back /> :  <Back />}
-       </TouchableOpacity>
+                <TouchableOpacity onPress={back}>
+                    {darkMode ? <Dark_back /> : <Back />}
+                </TouchableOpacity>
             </View>
-            <View style={[styles.container, {backgroundColor:theme.background}]}>
-                
+            <View style={[styles.container, { backgroundColor: theme.background }]}>
                 <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollViewContent} showsVerticalScrollIndicator={false}>
-                <View style={styles.review_row}>
-                    <Text style={styles.parking}>car parking</Text>
-                    <View style={styles.rating_row}>
-                        <Star />
-                        <Text style={styles.review}>4.9 (300 reviews) </Text>
+                    <View style={styles.review_row}>
+                        <Text style={styles.parking}>car parking</Text>
+                        <View style={styles.rating_row}>
+                            <Star />
+                            <Text style={styles.review}>4.9 (300 reviews)</Text>
+                        </View>
                     </View>
-                </View>
-                <View style={styles.title_row}>
-                    <Text style={[styles.title, {color:theme.color}]}>ParkSecure</Text>
-                    <Share />
-                </View>
-                <Text style={styles.title_text}>1012 Ocean Avanue, New York, USA</Text>
+
+                    <View style={styles.title_row}>
+                        <Text style={[styles.title, { color: theme.color }]}>{parkingLot.nom}</Text>
+                        <Share />
+                    </View>
+                    <Text style={styles.title_text}>
+                        {parkingLot.localisation?.rue}, {parkingLot.localisation?.ville}, {parkingLot.localisation?.pays}
+                    </Text>
+
                     <Text style={styles.book_title}>Book A Slot</Text>
-                    <Text style={[styles.content_heading, {color:theme.color}]}>Day</Text>
-                    <CustomCalendar />
-                    <Text style={[styles.content_heading, {color:theme.color}]}>Arriving Time</Text>
+                    <Text style={[styles.content_heading, { color: theme.color }]}>Day</Text>
+                    <CustomCalendar onDateChange={(date) => setSelectedDate(date)} />
+
+                    <Text style={[styles.content_heading, { color: theme.color }]}>Arriving Time</Text>
                     <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
                         <View style={styles.time_container}>
                             {time_tab.map((d) => (
                                 <TouchableOpacity
+                                    key={d.id}
                                     style={[styles.tab, activetab === d.id && styles.activetab]}
                                     onPress={() => set_tab(d.id)}
-                                    key={d.id}
                                 >
                                     <Text style={[styles.time, activetab === d.id && styles.activetime]}>{d.time}</Text>
                                 </TouchableOpacity>
@@ -78,29 +115,29 @@ const BookSlot = () => {
                         </View>
                     </ScrollView>
 
-                    <Text style={[styles.content_heading, {color:theme.color}]}>Exit Time</Text>
-                    <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} >
+                    <Text style={[styles.content_heading, { color: theme.color }]}>Exit Time</Text>
+                    <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
                         <View style={styles.time_container}>
                             {time_tab.map((d) => (
                                 <TouchableOpacity
+                                    key={d.id}
                                     style={[styles.tab, activetab2 === d.id && styles.activetab]}
                                     onPress={() => set_tab2(d.id)}
-                                    key={d.id}
                                 >
                                     <Text style={[styles.time, activetab2 === d.id && styles.activetime]}>{d.time}</Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
-                      
                     </ScrollView>
+
                     <View style={styles.button_box}>
-                    <Button buttonText="continue" onPress={vehicle} />
+                        <Button buttonText="Continue" onPress={vehicle} />
                     </View>
                 </ScrollView>
             </View>
         </View>
-    )
-}
+    );
+};
 
 export default BookSlot;
 

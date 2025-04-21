@@ -21,7 +21,9 @@ const Root_layout = () => {
     <Stack.Screen name='(screens)/timer' options={{headerShown: false}} />
     <Stack.Screen name='(screens)/vehicle' options={{headerShown: false}} />
     <Stack.Screen name='(screens)/wallet' options={{headerShown: false}} />
-  </Stack>
+    <Stack.Screen name='(screens)/addVehicle' options={{headerShown: false}} />
+
+    </Stack>
   </ThemeProvider>
   )
 }
