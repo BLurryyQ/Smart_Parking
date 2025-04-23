@@ -53,7 +53,7 @@
             <tbody>
               {% for lot in parkings %}
               <tr>
-                <td>{{ lot.nom }}</td>
+                <td><a href="{% url 'parking_spaces' lot.id %}">{{ lot.nom }}</a></td>
                 <td>{{ lot.owner }}</td>
                 <td>{{ lot.capaciteTotal }}</td>
                 <td>{{ lot.placeDisponibles }}</td>

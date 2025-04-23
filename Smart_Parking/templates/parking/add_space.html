@@ -1,0 +1,78 @@
+{% extends 'layouts/base.html' %}
+
+{% block title %} Add Parking Space {% endblock %}
+
+{% block content %}
+
+<!-- Header -->
+<div class="header bg-primary pb-6">
+  <div class="container-fluid">
+    <div class="header-body">
+      <div class="row align-items-center py-4">
+        <div class="col-lg-6 col-7">
+          <h6 class="h2 text-white d-inline-block mb-0">Add Space</h6>
+          <nav aria-label="breadcrumb" class="d-none d-md-inline-block ml-md-4">
+            <ol class="breadcrumb breadcrumb-links breadcrumb-dark">
+              <li class="breadcrumb-item"><a href="{% url 'home' %}"><i class="fas fa-home"></i></a></li>
+              <li class="breadcrumb-item"><a href="{% url 'parking_spaces' parking_id=parking_id %}">Spaces</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Add Space</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Page Content -->
+<div class="container-fluid mt--6">
+  <div class="row">
+    <div class="col-xl-12">
+      <div class="card">
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="numero">Label</label>
+                  <input type="text" class="form-control" id="numero" name="numero" placeholder="Enter space label" required>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="type">Type</label>
+                  <select class="form-control" id="type" name="type" required>
+                    <option value="">-- Select type --</option>
+                    <option value="standard">Standard</option>
+                    <option value="handicape">Handicapé</option>
+                    <option value="electrique">Électrique</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="status">Status</label>
+                  <select class="form-control" id="status" name="status" required>
+                    <option value="">-- Select status --</option>
+                    <option value="libre">Libre</option>
+                    <option value="occupe">Occupé</option>
+                    <option value="reserve">Réservé</option>
+                    <option value="maintenance">Maintenance</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="text-right">
+              <button type="submit" class="btn btn-primary">Add Space</button>
+              <a href="{% url 'parking_spaces' parking_id=parking_id %}" class="btn btn-secondary">Cancel</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% include "includes/footer.html" %}
+</div>
+
+{% endblock %}

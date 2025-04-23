@@ -28,5 +28,7 @@ urlpatterns = [
     path('api/parking_lots/', include('parkingLot.urls')),
     path('api/vehicles/', include('vehicles.urls')),
     path('api/recognize-plate/', include('ocr.urls')),
+    path('api/payments/', include('payments.urls')),
+    path('api/parking_spaces/', include('parkingSpaces.urls')),
 ]
 

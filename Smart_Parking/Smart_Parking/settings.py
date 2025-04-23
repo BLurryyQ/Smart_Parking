@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'eTicket',
     'parkingLot',
     'vehicles',
+    'payments',
 ]
 
 MIDDLEWARE = [
@@ -148,3 +149,7 @@ EMAIL_HOST_USER = 'anaskelouch@gmail.com'
 EMAIL_HOST_PASSWORD = 'ucia axpn vaff zwkc'
 
 APPEND_SLASH = True
+
+# Stripe
+STRIPE_SECRET_KEY='sk_test_51R9cQaCQ3DEOvkMbvWyyrKcOn2m0Za1He5hXgrcesf1sNqMKZuUtbgbi04Vipqjy9V0ymy5XpvvN80wrh00oFkG700Z5BWsWsN'
+STRIPE_PUBLIC_KEY='pk_test_51R9cQaCQ3DEOvkMbS8Qcdt6DEn3dzun8EZjpckbkgx7r2qB4wd9hGOZtidK2UV9n50uYS4QpGcshrmLAH4FSk1u600GxfqS4F6'
