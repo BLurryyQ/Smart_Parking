@@ -103,7 +103,7 @@ const Favourite = () => {
                                     </View>
                                     <View style={styles.name_price2}>
                                         <Text style={[styles.name, { color: theme.color }]}>{p.nom}</Text>
-                                        <Text style={styles.price}>$5.00<Text style={styles.time}>/hr</Text></Text>
+                                        <Text style={styles.price}>5.00 MAD<Text style={styles.time}>/hr</Text></Text>
                                     </View>
                                     <View style={styles.location_row}>
                                         {darkMode ? <Dark_Locate /> : <Locate />}

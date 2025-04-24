@@ -144,7 +144,7 @@ const Home = () => {
                                         <Text style={styles.parking}>Car Parking</Text>
                                         <View style={styles.name_price}>
                                             <Text style={[styles.name, { color: theme.color }]}>{p.nom}</Text>
-                                            <Text style={styles.price}>$5.00 <Text style={styles.time}>/hr</Text></Text>
+                                            <Text style={styles.price}>5.00 MAD <Text style={styles.time}>/hr</Text></Text>
                                         </View>
                                         <View style={styles.timing_car}>
                                             <View style={styles.timing_row}>
@@ -186,7 +186,7 @@ const Home = () => {
                                     </View>
                                     <View style={styles.name_price2}>
                                         <Text style={[styles.name, { color: theme.color }]}>{p.nom}</Text>
-                                        <Text style={styles.price}>$5.00 <Text style={styles.time}>/hr</Text></Text>
+                                        <Text style={styles.price}>5.00 MAD <Text style={styles.time}>/hr</Text></Text>
                                     </View>
                                     <View style={styles.timing_car2}>
                                         <View style={styles.timing_row}>

@@ -144,7 +144,7 @@ const ParkingDetails = () => {
                         <View style={styles.price_row}>
                             <View>
                                 <Text style={[styles.price_title, { color: theme.color }]}>Total Price</Text>
-                                <Text style={styles.price}>$5.00 <Text style={styles.hour}>/hr</Text></Text>
+                                <Text style={styles.price}>5.00 MAD <Text style={styles.hour}>/hr</Text></Text>
                             </View>
                             <Button buttonText="Book Slot" onPress={slot} />
                         </View>

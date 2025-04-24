@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView, Platform, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity, ScrollView, Platform, ActivityIndicator } from 'react-native';
 import React, { useContext, useEffect, useState } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
 import Back from "../../assets/images/White_back.svg";
@@ -6,17 +6,45 @@ import Star from "../../assets/images/Star.svg";
 import Share from "../../assets/images/Locate.svg";
 import Dark_back from "../../assets/images/White_back.svg";
 import CustomCalendar from '../../components/CustomCalendar/CustomCalendar';
-import { time_tab } from '../../Data/Data';
 import Button from '../../components/Button/Button';
 import ThemeContext from '../../theme/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const generateTimeSlots = () => {
+    const slots = [];
+    const now = new Date();
+
+    // Round up to the next half hour
+    const minutes = now.getMinutes();
+    if (minutes > 0 && minutes <= 30) {
+        now.setMinutes(30);
+    } else {
+        now.setHours(now.getHours() + 1);
+        now.setMinutes(0);
+    }
+    now.setSeconds(0);
+    now.setMilliseconds(0);
+
+    for (let i = 0; i < 10; i++) {
+        const slot = new Date(now.getTime() + i * 30 * 60 * 1000);
+        const hour = slot.getHours();
+        const minute = slot.getMinutes();
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const formattedHour = (hour % 12 === 0 ? 12 : hour % 12).toString().padStart(2, '0');
+        const formattedMinute = minute.toString().padStart(2, '0');
+        const formatted = `${formattedHour}:${formattedMinute} ${period}`;
+        slots.push({ id: i, time: formatted, full: slot });
+    }
+
+    return slots;
+};
 
 const BookSlot = () => {
     const { theme, darkMode } = useContext(ThemeContext);
     const { userId, parkingLotId } = useLocalSearchParams();
-    const [activetab, setActivetab] = useState(time_tab[0].id);
-    const [activetab2, setActivetab2] = useState(time_tab[1].id);
+    const timeSlots = generateTimeSlots();
+    const [activetab, setActivetab] = useState(timeSlots[0].id);
+    const [activetab2, setActivetab2] = useState(timeSlots[1]?.id ?? timeSlots[0].id);
     const [selectedDate, setSelectedDate] = useState(null);
     const [parkingLot, setParkingLot] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -24,23 +52,48 @@ const BookSlot = () => {
     const set_tab = (id) => setActivetab(id);
     const set_tab2 = (id) => setActivetab2(id);
 
-    const arrivalTime = time_tab.find(t => t.id === activetab)?.time || '';
-    const exitTime = time_tab.find(t => t.id === activetab2)?.time || '';
+    const arrivalTime = timeSlots.find(t => t.id === activetab)?.time || '';
+    const exitTime = timeSlots.find(t => t.id === activetab2)?.time || '';
+
+    const dateDebut = new Date(`${selectedDate}T${arrivalTime.split(' ')[0]}:00`);
+    const dateFin = new Date(`${selectedDate}T${exitTime.split(' ')[0]}:00`);
 
     const vehicle = async () => {
-        const userData = await AsyncStorage.getItem('user');
-        const parsed = JSON.parse(userData);
-        const userId = parsed._id;
+        const now = new Date();
 
-        router.push({
-            pathname: '(screens)/vehicle',
-            params: {
-                userId: userId,
-                parkingLotId,
-                startTime: time_tab.find(t => t.id === activetab)?.time,
-                endTime: time_tab.find(t => t.id === activetab2)?.time,
-            },
-        });
+        // fallback to today if not selected
+        const formattedDate = selectedDate || now.toISOString().split('T')[0];
+
+        // handle default fallback times
+        const defaultStart = new Date(now);
+        const defaultEnd = new Date(now.getTime() + 30 * 60 * 1000);
+
+        const arrivalTimeRaw = timeSlots.find(t => t.id === activetab)?.time;
+        const exitTimeRaw = timeSlots.find(t => t.id === activetab2)?.time;
+
+        const arrivalTime = arrivalTimeRaw ? arrivalTimeRaw.split(" ")[0] : defaultStart.toTimeString().slice(0, 5); // "HH:MM"
+        const exitTime = exitTimeRaw ? exitTimeRaw.split(" ")[0] : defaultEnd.toTimeString().slice(0, 5); // "HH:MM"
+
+        const dateDebut = new Date(`${formattedDate}T${arrivalTime}:00`);
+        const dateFin = new Date(`${formattedDate}T${exitTime}:00`);
+
+        if (isNaN(dateDebut.getTime()) || isNaN(dateFin.getTime())) {
+            alert("Invalid date or time. Please try again.");
+            return;
+        }
+
+        const userData = await AsyncStorage.getItem('user');
+        const userId = JSON.parse(userData)._id;
+
+        const payload = {
+            userId,
+            parkingLotId,
+            dateDebut: dateDebut.toISOString(),
+            dateFin: dateFin.toISOString(),
+        };
+
+        await AsyncStorage.setItem('reservationInfo', JSON.stringify(payload));
+        router.push({ pathname: '(screens)/vehicle' });
     };
 
     const back = () => {
@@ -103,7 +156,7 @@ const BookSlot = () => {
                     <Text style={[styles.content_heading, { color: theme.color }]}>Arriving Time</Text>
                     <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
                         <View style={styles.time_container}>
-                            {time_tab.map((d) => (
+                            {timeSlots.map((d) => (
                                 <TouchableOpacity
                                     key={d.id}
                                     style={[styles.tab, activetab === d.id && styles.activetab]}
@@ -118,7 +171,7 @@ const BookSlot = () => {
                     <Text style={[styles.content_heading, { color: theme.color }]}>Exit Time</Text>
                     <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
                         <View style={styles.time_container}>
-                            {time_tab.map((d) => (
+                            {timeSlots.map((d) => (
                                 <TouchableOpacity
                                     key={d.id}
                                     style={[styles.tab, activetab2 === d.id && styles.activetab]}

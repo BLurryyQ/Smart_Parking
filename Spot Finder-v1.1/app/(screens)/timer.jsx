@@ -166,7 +166,7 @@ const Timer = () => {
               </View>
               <View style={styles.column}>
                 <Text style={styles.text2}>Total Payment</Text>
-                <Text style={[styles.value2, { color: theme.color }]}>$64.00</Text>
+                <Text style={[styles.value2, { color: theme.color }]}>MAD 64.00</Text>
               </View>
             </View>
           </View>

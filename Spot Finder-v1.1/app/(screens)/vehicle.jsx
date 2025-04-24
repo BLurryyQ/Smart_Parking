@@ -5,12 +5,10 @@ import Dark_back from "../../assets/images/White_back.svg";
 import Add from "../../assets/images/add.svg";
 import CheckCircle from "../../components/CheckCircle/CheckCircle";
 import Button from '../../components/Button/Button';
-import { useLocalSearchParams, router } from "expo-router";
+import { useFocusEffect, router } from "expo-router";
 import ThemeContext from '../../theme/ThemeContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from 'expo-router';
 import VehicleSkeleton from '../../components/Skeleton/VehicleSkeleton';
-
 import Car1 from "../../assets/images/car1.svg";
 import Car2 from "../../assets/images/car2.svg";
 import Car3 from "../../assets/images/car3.svg";
@@ -22,73 +20,49 @@ const carIcons = [<Car1 />, <Car2 />, <Car3 />, <Car4 />, <Car5 />, <Car6 />];
 
 const Vehicle = () => {
   const { theme, darkMode } = useContext(ThemeContext);
-  const { parkingLotId, startTime, endTime } = useLocalSearchParams();
   const [vehicles, setVehicles] = useState([]);
   const [checkedStates, setCheckedStates] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState(null);
   const [iconMap, setIconMap] = useState({});
 
-  const handlePress1 = (index) => {
+  const handlePress = (index) => {
     const newCheckedStates = Array(vehicles.length).fill(false);
     newCheckedStates[index] = true;
     setCheckedStates(newCheckedStates);
   };
 
-  const slot = () => {
+  const continueToSlot = async () => {
     const selectedIndex = checkedStates.findIndex(v => v === true);
-    if (selectedIndex === -1) {
-      alert("Please select a vehicle.");
-      return;
-    }
+    if (selectedIndex === -1) return alert("Please select a vehicle.");
+    const vehicleId = vehicles[selectedIndex]._id;
 
-    const selectedVehicleId = vehicles[selectedIndex]._id;
+    const reservationInfo = await AsyncStorage.getItem('reservationInfo');
+    const parsed = JSON.parse(reservationInfo);
 
-    router.push({
-      pathname: '(screens)/parkingSlot',
-      params: {
-        userId,
-        vehicleId: selectedVehicleId,
-        parkingLotId,
-        startTime,
-        endTime
-      }
-    });
+    await AsyncStorage.setItem('reservationInfo', JSON.stringify({
+      ...parsed,
+      vehicleId
+    }));
+
+    router.push('(screens)/parkingSlot');
   };
 
-  const back = () => {
-    if (router.canGoBack?.()) {
-      router.back();
-    } else {
-      router.push('(screens)/bookSlot');
-    }
-  };
+  const back = () => router.back();
 
   const fetchVehicles = async () => {
     try {
-      const storedUserId = await AsyncStorage.getItem('userId');
-      if (!storedUserId) {
-        alert("User not logged in.");
-        return;
-      }
-
-      setUserId(storedUserId);
-      const response = await fetch(`http://127.0.0.1:8000/api/vehicles/user/${storedUserId}/`);
+      const userId = (await AsyncStorage.getItem('userId')) || (await AsyncStorage.getItem('user'))._id;
+      const response = await fetch(`http://127.0.0.1:8000/api/vehicles/user/${userId}/`);
       const json = await response.json();
-
       if (response.ok) {
         setVehicles(json);
         setCheckedStates(Array(json.length).fill(false));
-
-        // Shuffle and assign icons without immediate repetition
         const shuffled = [...carIcons].sort(() => Math.random() - 0.5);
         const icons = {};
         json.forEach((v, i) => {
           icons[v._id] = shuffled[i % carIcons.length];
         });
         setIconMap(icons);
-      } else {
-        console.log(json.message || "Failed to fetch vehicles");
       }
     } catch (err) {
       console.error("Error fetching vehicles:", err);
@@ -97,11 +71,9 @@ const Vehicle = () => {
     }
   };
 
-  useFocusEffect(
-      React.useCallback(() => {
-        fetchVehicles();
-      }, [])
-  );
+  useFocusEffect(React.useCallback(() => {
+    fetchVehicles();
+  }, []));
 
   return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -117,50 +89,36 @@ const Vehicle = () => {
           </TouchableOpacity>
         </View>
 
-        {loading ? (
-            <ScrollView contentContainerStyle={styles.scrollView} showsVerticalScrollIndicator={false}>
-              {[...Array(4)].map((_, i) => (
-                  <VehicleSkeleton key={i} />
-              ))}
-            </ScrollView>
-        ) : (
-            <ScrollView contentContainerStyle={styles.scrollView} showsVerticalScrollIndicator={false}>
-              <View style={styles.column}>
-                <View style={styles.stack_container}>
-                  {vehicles.map((d, index) => (
-                      <TouchableOpacity
-                          style={[styles.stack, { backgroundColor: theme.cardbg }]}
-                          key={d._id}
-                          onPress={() => handlePress1(index)}
-                      >
-                        <View style={styles.imageContainer}>
-                          {iconMap[d._id]}
+        <ScrollView contentContainerStyle={styles.scrollView} showsVerticalScrollIndicator={false}>
+          {loading ? [...Array(4)].map((_, i) => <VehicleSkeleton key={i} />) : (
+              <View style={styles.stack_container}>
+                {vehicles.map((v, index) => (
+                    <TouchableOpacity
+                        key={v._id}
+                        style={[styles.stack, { backgroundColor: theme.cardbg }]}
+                        onPress={() => handlePress(index)}
+                    >
+                      <View style={styles.imageContainer}>{iconMap[v._id]}</View>
+                      <View style={styles.stack_content}>
+                        <View style={styles.stack_content_left}>
+                          <Text style={[styles.company, { color: theme.color }]}>{v.brand} {v.model} ({v.type})</Text>
+                          <Text style={styles.modal}>{v.plateNumber}</Text>
                         </View>
-                        <View style={styles.stack_content}>
-                          <View style={styles.stack_content_left}>
-                            <Text style={[styles.company, { color: theme.color }]}>
-                              {d.brand} {d.model}
-                            </Text>
-                            <Text style={styles.modal}>
-                              {d.type} <Text style={[styles.modal_no, { color: theme.color }]}> . {d.plateNumber}</Text>
-                            </Text>
-                          </View>
-                          <CheckCircle
-                              size={24}
-                              color="#007BFF"
-                              checked={checkedStates[index]}
-                              onPress={() => handlePress1(index)}
-                          />
-                        </View>
-                      </TouchableOpacity>
-                  ))}
-                </View>
-                <View style={styles.button_box}>
-                  <Button buttonText="Continue" onPress={slot} />
-                </View>
+                        <CheckCircle
+                            size={24}
+                            color="#007BFF"
+                            checked={checkedStates[index]}
+                            onPress={() => handlePress(index)}
+                        />
+                      </View>
+                    </TouchableOpacity>
+                ))}
               </View>
-            </ScrollView>
-        )}
+          )}
+          <View style={styles.button_box}>
+            <Button buttonText="Continue" onPress={continueToSlot} />
+          </View>
+        </ScrollView>
       </View>
   );
 };

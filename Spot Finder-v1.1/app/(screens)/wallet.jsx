@@ -30,7 +30,7 @@ const Wallet = () => {
         <View style={styles.stack_top}>
             <View style={styles.stack_left}>
                 <Text style={styles.text}>Wallet Balance</Text>
-                <Text style={[styles.value]}>$ 15000.00</Text>
+                <Text style={[styles.value]}> 15000.00 MAD</Text>
             </View>
             <Wallets />
         </View>

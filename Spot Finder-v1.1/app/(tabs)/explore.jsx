@@ -1,141 +1,230 @@
-import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView, Dimensions, Platform } from 'react-native';
-import React, { useContext, useState } from 'react';
-import Map from "../../assets/images/map.png";
-import { popular } from '../../Data/Data';
+import React, { useEffect, useState, useContext } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import ThemeContext from '../../theme/ThemeContext';
 import Star from "../../assets/images/Star.svg";
-import Heart from "../../assets/images/empty_heart.svg"; 
+import Heart from "../../assets/images/empty_heart.svg";
 import HeartFilled from "../../assets/images/filled_heart.svg";
 import Car from "../../assets/images/car.svg";
-import Clock from "../../assets/images/clock.svg";
-import ThemeContext from '../../theme/ThemeContext';
-import { router } from "expo-router";
+import Cars from "../../assets/images/Cars.svg";
+
+const parkingImages = [
+  require('../../assets/images/parking1.png'),
+  require('../../assets/images/parking2.png'),
+  require('../../assets/images/parking3.png'),
+  require('../../assets/images/parking4.png'),
+  require('../../assets/images/parking5.png'),
+];
+
+const FAVORITES_KEY = 'favorite_parkings';
 
 const Explore = () => {
   const { theme } = useContext(ThemeContext);
+  const [userCoords, setUserCoords] = useState(null);
+  const [parkings, setParkings] = useState([]);
   const [wishlist, setWishlist] = useState([]);
+  const [selectedParking, setSelectedParking] = useState(null);
 
-  const toggleWishlist = (id) => {
-    if (wishlist.includes(id)) {
-      setWishlist(wishlist.filter(item => item !== id));
-    } else {
-      setWishlist([...wishlist, id]);
-    }
+  const GOOGLE_MAPS_KEY = 'AIzaSyAiebjuQH71Q4hynDLG69UgMkbNYabtPAQ';
+
+  useEffect(() => {
+    const loadData = async () => {
+      const loc = await AsyncStorage.getItem("location");
+      const storedFavorites = await AsyncStorage.getItem(FAVORITES_KEY);
+
+      if (loc) {
+        const parsed = JSON.parse(loc);
+        setUserCoords({ lat: parsed.latitude, lng: parsed.longitude });
+      }
+
+      if (storedFavorites) {
+        setWishlist(JSON.parse(storedFavorites));
+      }
+
+      const res = await fetch("http://127.0.0.1:8000/api/parking_lots/");
+      const data = await res.json();
+
+      const shuffledImages = [...parkingImages].sort(() => 0.5 - Math.random());
+      let index = 0;
+
+      const formatted = data.map(p => {
+        const image = shuffledImages[index % shuffledImages.length];
+        index++;
+        return {
+          id: p._id,
+          name: p.nom,
+          coords: {
+            lat: p.localisation.coordinates[0],
+            lng: p.localisation.coordinates[1],
+          },
+          price: "5.00 MAD",
+          timing: "/hr",
+          timing2: `${p.capaciteTotal} total`,
+          vehicle: `${p.placeDisponibles} spots`,
+          image,
+          rating: "4.9"
+        };
+      });
+
+      setParkings(formatted);
+    };
+
+    loadData();
+  }, []);
+
+  const toggleWishlist = async (id) => {
+    const updated = wishlist.includes(id)
+        ? wishlist.filter(i => i !== id)
+        : [...wishlist, id];
+
+    setWishlist(updated);
+    await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(updated));
   };
 
-  const details = () => {
-    router.push('(screens)/parkingDetails');
+  const getGoogleMapUrl = () => {
+    if (!userCoords) return '';
+    const center = `${userCoords.lat},${userCoords.lng}`;
+    const destination = selectedParking ? `${selectedParking.lat},${selectedParking.lng}` : null;
+
+    if (destination) {
+      return `https://www.google.com/maps/embed/v1/directions?key=${GOOGLE_MAPS_KEY}&origin=${center}&destination=${destination}&mode=driving`;
+    }
+
+    return `https://www.google.com/maps/embed/v1/place?key=${GOOGLE_MAPS_KEY}&q=${center}&zoom=14`;
   };
 
   return (
-    <View style={styles.explore_page}>
-      <Image source={Map} style={styles.image} />
-      <ScrollView horizontal={true} style={styles.horizontal_scroll} showsHorizontalScrollIndicator={false} >
-        <View style={styles.popular_container}>
-          {popular.map((d) => (
-            <TouchableOpacity style={[styles.popular_box, {backgroundColor: theme.cardbg}]} key={d.id} onPress={details}>
-              <Image source={d.image} style={styles.images} />
-              <View style={styles.top_row}>
-                <View style={styles.rating_row}>
-                  <Star />
-                  <Text style={styles.rating}>{d.rating}</Text>
-                </View>
-                <TouchableOpacity onPress={() => toggleWishlist(d.id)} style={styles.wishlist_container}>
-                  {wishlist.includes(d.id) ? <HeartFilled /> : <Heart />}
+      <View style={styles.container}>
+        {userCoords ? (
+            <View style={styles.mapContainer}>
+              {/* Web-based approach with an iframe */}
+              <iframe
+                  title="Google Map"
+                  src={getGoogleMapUrl()}
+                  style={styles.map}
+                  allowFullScreen
+                  loading="lazy"
+              />
+            </View>
+        ) : (
+            <Text style={{ textAlign: 'center' }}>Loading map...</Text>
+        )}
+
+        <View style={styles.overlay}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scroll}>
+            {parkings.map(p => (
+                <TouchableOpacity
+                    key={p.id}
+                    style={[styles.card, { backgroundColor: theme.cardbg }]}
+                    onPress={() => setSelectedParking(p.coords)}
+                >
+                  <View style={styles.imageWrap}>
+                    <Image source={p.image} style={styles.image} resizeMode="cover" />
+                    <TouchableOpacity onPress={() => toggleWishlist(p.id)} style={styles.heart}>
+                      {wishlist.includes(p.id)
+                          ? <HeartFilled width={20} height={20} fill="#FF3B30" />
+                          : <Heart width={20} height={20} />}
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.body}>
+                    <View style={styles.ratingRow}>
+                      <Star />
+                      <Text style={styles.rating}>{p.rating}</Text>
+                    </View>
+                    <Text style={styles.parking}>Car Parking</Text>
+                    <View style={styles.name_price}>
+                      <Text style={[styles.name, { color: theme.color }]}>{p.name}</Text>
+                      <Text style={styles.price}>{p.price}<Text style={styles.time}>{p.timing}</Text></Text>
+                    </View>
+                    <View style={styles.timing_car}>
+                      <View style={styles.timing_row}>
+                        <Cars />
+                        <Text style={[styles.timing, { color: theme.color }]}>{p.timing2}</Text>
+                      </View>
+                      <View style={styles.car_row}>
+                        <Car />
+                        <Text style={[styles.car, { color: theme.color }]}>{p.vehicle}</Text>
+                      </View>
+                    </View>
+                  </View>
                 </TouchableOpacity>
-              </View>
-              <View style={styles.card_body}>
-                <Text style={styles.parking}>{d.parking}</Text>
-                <View style={styles.name_price}>
-                  <Text style={[styles.name, {color: theme.color}]}>{d.name}</Text>
-                  <Text style={styles.price}>{d.price}<Text style={styles.time}>{d.timing}</Text></Text>
-                </View>
-                <View style={styles.timing_car}>
-                  <View style={styles.timing_row}>
-                    <Clock />
-                    <Text style={[styles.timing, {color: theme.color}]}>{d.timing2}</Text>
-                  </View>
-                  <View style={styles.car_row}>
-                    <Car />
-                    <Text style={[styles.car, {color:theme.color}]}>{d.vehicle}</Text>
-                  </View>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+            ))}
+          </ScrollView>
         </View>
-      </ScrollView>
-    </View>
+      </View>
   );
-}
+};
 
 export default Explore;
 
 const styles = StyleSheet.create({
-  explore_page: {
+  container: {
     flex: 1,
+    position: 'relative',
+  },
+  mapContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 0,
+  },
+  map: {
+    width: '100%',
+    height: '100%',
+    border: 0,
+  },
+  overlay: {
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    zIndex: 2,
+    paddingLeft: 10,
+  },
+  scroll: {
+    paddingBottom: 10,
+  },
+  card: {
+    width: 200,
+    marginRight: 12,
+    borderRadius: 12,
+    padding: 10,
+  },
+  imageWrap: {
+    position: 'relative',
+    height: 130,
+    borderRadius: 10,
+    overflow: 'hidden',
   },
   image: {
     width: '100%',
     height: '100%',
-    flex: 1,
-    resizeMode: 'cover',
   },
-  horizontal_scroll: {
+  heart: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    top: 8,
+    right: 8,
   },
-  popular_container: {
-    marginVertical: 10,
-    flexDirection: 'row',
-    maxHeight: 290,
-    height: 290,
-  },
-  popular_box: {
-    marginBottom: 20,
-    width: 200,
-    marginRight: 10, 
-    padding: 10,
-    backgroundColor: '#F6F6F6',
-    borderRadius: 10,
-  },
-  images: {
-    width: 180,
-    height: 130,
-    borderRadius: 10,
-  },
-  top_row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  body: {
     marginTop: 10,
-    position: 'absolute',
-    left: 10,
-    top: 10,
-    width:Platform.OS === 'web'? '90%' : '100%',
-    paddingHorizontal: 10,
+    gap: 6,
   },
-  rating_row: {
+  ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent:'center',
-    backgroundColor:'#FFFFFF',
-    borderRadius: 5,
-    paddingVertical: 3,
+    gap: 4,
+    backgroundColor: '#fff',
+    alignSelf: 'flex-start',
     paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
   rating: {
-    marginLeft: 5,
     fontSize: 12,
-    lineHeight: 24,
     fontFamily: 'Roboto_400Regular',
-    color: '#121212',
   },
-  wishlist_container: {
-    padding: 5,
-  },
-  card_body: {},
   parking: {
     fontSize: 10,
     lineHeight: 11,
@@ -146,71 +235,49 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     paddingHorizontal: 10,
     maxWidth: 85,
-    marginVertical: 8,
   },
   name_price: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#BABABA',
-  },
-  name_price2: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingBottom: 6,
-    width: '80%',
+    borderBottomColor: '#E0E0E0',
+    paddingBottom: 4,
   },
   name: {
     fontSize: 14,
-    lineHeight: 24,
     fontFamily: 'Montserrat_600SemiBold',
-    color: '#121212',
   },
   price: {
     fontSize: 14,
-    lineHeight: 24,
     fontFamily: 'Montserrat_600SemiBold',
     color: '#FF95AE',
   },
   time: {
+    fontSize: 12,
     color: '#757575',
   },
   timing_car: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 8,
-  },
-  timing_car2: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 8,
-    width: '80%',
+    marginTop: 6,
   },
   timing_row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 6,
   },
   car_row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 6,
   },
   timing: {
     fontSize: 12,
-    lineHeight: 22,
     fontFamily: 'Roboto_400Regular',
-    color: '#121212',
   },
   car: {
     fontSize: 12,
-    lineHeight: 22,
     fontFamily: 'Roboto_400Regular',
-    color: '#121212',
   },
 });
+

@@ -4,6 +4,7 @@ import Back from "../../assets/images/Back.svg";
 import Dark_back from "../../assets/images/White_back.svg";
 import { Montserrat_600SemiBold, Montserrat_700Bold } from '@expo-google-fonts/montserrat';
 import { extend_data, pay_card } from '../../Data/Data';
+import Stripe from "../../assets/images/Stripe.svg";
 import CheckCircle from '../../components/CheckCircle/CheckCircle';
 import Wallet from "../../assets/images/pink_wallet.svg";
 import Card from "../../assets/images/card_icon.svg";
@@ -90,23 +91,22 @@ const Extend = () => {
                     </TouchableOpacity>
                 </View>
             </View>
-            <Text style={[styles.title, {color:theme.color}]}>More Payment Option</Text>
-            <View style={styles.pay_tab_container}>
-                {
-                    pay_card.map((d, index) => (
-                        <TouchableOpacity style={[styles.tab, {backgroundColor:theme.cardbg}]} key={d.id} onPress={() => handlePress1(index)}>
+                    <Text style={[styles.title, {color:theme.color}]}>More Payment Option</Text>
+                    <View style={styles.pay_tab_container}>
+                        <TouchableOpacity
+                            style={[styles.tab, {backgroundColor: theme.cardbg}]}
+                            onPress={() => setCheckedStates([true])}
+                        >
                             <View style={styles.tab_left}>
-                                {d.icon}
-                                <Text style={styles.tab_text}>{d.text}</Text>
+                                <Stripe />
+                                <Text style={styles.tab_text}>Stripe</Text>
                             </View>
-                            <CheckCircle size={24} color="#007BFF" checked={checkedStates[index]} />
+                            <CheckCircle size={24} color="#007BFF" checked={checkedStates[0]} />
                         </TouchableOpacity>
-                    ))
-                }
-            </View>
+                    </View>
             </View>
             <View style={styles.button_box}>
-                <Button buttonText="Pay $5" onPress={back} />
+                <Button buttonText="Pay 5 MAD" onPress={back} />
             </View>
             </View>
             </ScrollView>

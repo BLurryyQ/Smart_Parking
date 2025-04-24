@@ -116,15 +116,15 @@ const Receipt = () => {
               <View style={styles.review_container}>
                 <View style={styles.review_row}>
                   <Text style={[styles.text, { color: theme.color }]}>Price</Text>
-                  <Text style={[styles.value, { color: theme.color }]}>$5.00</Text>
+                  <Text style={[styles.value, { color: theme.color }]}>5.00 MAD</Text>
                 </View>
                 <View style={styles.review_row}>
                   <Text style={[styles.text, { color: theme.color }]}>Fees</Text>
-                  <Text style={[styles.value, { color: theme.color }]}>$1.00</Text>
+                  <Text style={[styles.value, { color: theme.color }]}>1.00 MAD</Text>
                 </View>
                 <View style={styles.review_row}>
                   <Text style={[styles.value, { color: theme.color }]}>Total Price</Text>
-                  <Text style={[styles.value, { color: theme.color }]}>$6.00</Text>
+                  <Text style={[styles.value, { color: theme.color }]}>6.00 MAD</Text>
                 </View>
               </View>
 

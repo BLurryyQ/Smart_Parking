@@ -83,16 +83,16 @@ const Booking = () => {
           const imgMap = {};
           const parkingImageCache = {};
 
-          data.reservations.forEach(r => {
+          newData.reservations.forEach(r => {
             const parkingId = r.parkingLot._id;
             if (!parkingImageCache[parkingId]) {
-              // Use a deterministic index based on the parking ID hash
               const hash = [...parkingId].reduce((acc, char) => acc + char.charCodeAt(0), 0);
               const imageIndex = hash % parkingImages.length;
               parkingImageCache[parkingId] = parkingImages[imageIndex];
             }
             imgMap[r._id] = parkingImageCache[parkingId];
           });
+
           setImageMap(imgMap);
           setReservations(newData.reservations);
         }
@@ -180,7 +180,7 @@ const Booking = () => {
                         </View>
                       </View>
                       <Text style={[styles.name, { color: theme.color }]}>{res.parkingLot.nom}</Text>
-                      <Text style={styles.price}>$5.00 <Text style={styles.time}>/hr</Text></Text>
+                      <Text style={styles.price}>5.00 MAD <Text style={styles.time}>/hr</Text></Text>
                       <View style={styles.location_row}>
                         <Location />
                         <Text style={styles.time}>
