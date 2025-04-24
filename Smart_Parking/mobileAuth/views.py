@@ -7,6 +7,7 @@ from django.core.mail import send_mail
 import json
 import random
 from Smart_Parking.database import db
+from bson import ObjectId
 
 
 def generate_verification_code():
@@ -168,3 +169,16 @@ def register_user(request):
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
     return JsonResponse({'error': 'Invalid method'}, status=405)
+
+
+def get_user_email(request, user_id):
+    try:
+        user = db.users.find_one({'_id': ObjectId(user_id)})
+        if not user:
+            return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
+
+        return JsonResponse({'success': True, 'email': user['email']}, status=200)
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+

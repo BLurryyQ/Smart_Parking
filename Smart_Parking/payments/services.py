@@ -14,6 +14,13 @@ def create_checkout_session(data):
     amount_cents = int(float(data['montant']) * 100)
     currency = data['devise'].lower()
 
+    # Get the base success URL (from the frontend with all query params)
+    success_base_url = data.get('success_base_url', 'http://localhost:8081/payment')
+
+    # Append success/cancel info to it
+    success_url = f"{success_base_url}&success=true"
+    cancel_url = f"{success_base_url}&cancel=true"
+
     session = stripe.checkout.Session.create(
         payment_method_types=['card'],
         mode='payment',
@@ -27,10 +34,15 @@ def create_checkout_session(data):
             },
             'quantity': 1,
         }],
-        success_url="https://i-park.com/checkout/success",
-        cancel_url="https://i-park.com/checkout/cancel",
+        success_url=success_url,
+        cancel_url=cancel_url,
     )
-    return {'checkout_url': session.url, 'session_id': session.id, 'reservationId': reservation_id}
+
+    return {
+        'checkout_url': session.url,
+        'session_id': session.id,
+        'reservationId': reservation_id
+    }
 
 def confirm_checkout_session(session_id):
     session = stripe.checkout.Session.retrieve(session_id)
@@ -42,11 +54,15 @@ def confirm_checkout_session(session_id):
     if session.customer_email:
         send_mail(
             "I-PARK Reservation Confirmation",
-            f"Reservation ID: {payment_doc['reservationId']}\\n"
+            f"Reservation ID: {payment_doc['reservationId']}\n"
             f"Amount: {payment_doc['montant']} {payment_doc['devise']}",
             settings.DEFAULT_FROM_EMAIL,
             [session.customer_email],
             html_message=f"<b>Reservation Confirmed</b><br>Ref: {payment_doc['reservationId']}"
         )
 
-    return {'payment_id': str(payment_doc['_id']), 'reservationId': payment_doc['reservationId'], 'status': payment_doc['status']}
+    return {
+        'payment_id': str(payment_doc['_id']),
+        'reservationId': payment_doc['reservationId'],
+        'status': payment_doc['status']
+    }
