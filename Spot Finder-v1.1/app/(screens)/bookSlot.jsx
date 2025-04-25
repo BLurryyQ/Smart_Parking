@@ -61,21 +61,24 @@ const BookSlot = () => {
     const vehicle = async () => {
         const now = new Date();
 
-        // fallback to today if not selected
         const formattedDate = selectedDate || now.toISOString().split('T')[0];
 
-        // handle default fallback times
         const defaultStart = new Date(now);
         const defaultEnd = new Date(now.getTime() + 30 * 60 * 1000);
 
         const arrivalTimeRaw = timeSlots.find(t => t.id === activetab)?.time;
         const exitTimeRaw = timeSlots.find(t => t.id === activetab2)?.time;
 
-        const arrivalTime = arrivalTimeRaw ? arrivalTimeRaw.split(" ")[0] : defaultStart.toTimeString().slice(0, 5); // "HH:MM"
-        const exitTime = exitTimeRaw ? exitTimeRaw.split(" ")[0] : defaultEnd.toTimeString().slice(0, 5); // "HH:MM"
+        const arrivalTime = arrivalTimeRaw ? arrivalTimeRaw.split(" ")[0] : defaultStart.toTimeString().slice(0, 5);
+        const exitTime = exitTimeRaw ? exitTimeRaw.split(" ")[0] : defaultEnd.toTimeString().slice(0, 5);
 
-        const dateDebut = new Date(`${formattedDate}T${arrivalTime}:00`);
-        const dateFin = new Date(`${formattedDate}T${exitTime}:00`);
+        const [year, month, day] = formattedDate.split('-').map(Number);
+        const [hourA, minuteA] = arrivalTime.split(':').map(Number);
+        const [hourE, minuteE] = exitTime.split(':').map(Number);
+
+        // Construct UTC dates then subtract 1 hour
+        const dateDebut = new Date(Date.UTC(year, month - 1, day, hourA, minuteA) - 60 * 60 * 1000);
+        const dateFin = new Date(Date.UTC(year, month - 1, day, hourE, minuteE) - 60 * 60 * 1000);
 
         if (isNaN(dateDebut.getTime()) || isNaN(dateFin.getTime())) {
             alert("Invalid date or time. Please try again.");
