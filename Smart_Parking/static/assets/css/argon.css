@@ -24,7 +24,7 @@
   --red: #f5365c;
   --orange: #fb6340;
   --yellow: #ffd600;
-  --green: #2dce89;
+  --green: #2dcecc;
   --teal: #11cdef;
   --cyan: #2bffc6;
   --white: #fff;
@@ -10447,12 +10447,6 @@ a.text-warning:hover, a.text-warning:focus {
 a.text-danger:hover, a.text-danger:focus {
   color: #d40b33 !important; }
 
-.text-light {
-  color: #adb5bd !important; }
-
-a.text-light:hover, a.text-light:focus {
-  color: #838f9b !important; }
-
 .text-dark {
   color: #212529 !important; }
 
@@ -14060,12 +14054,12 @@ button.bg-yellow:focus {
   background-color: #ccab00 !important; }
 
 .bg-green {
-  background-color: #2dce89 !important; }
+  background-color: #2dcecc !important; }
 
 a.bg-green:hover, a.bg-green:focus,
 button.bg-green:hover,
 button.bg-green:focus {
-  background-color: #24a46d !important; }
+  background-color: #2dcecc !important; }
 
 .bg-teal {
   background-color: #11cdef !important; }
@@ -14181,7 +14175,7 @@ button.bg-lighter:focus {
   background: linear-gradient(87deg, #ffd600 0, #beff00 100%) !important; }
 
 .bg-gradient-green {
-  background: linear-gradient(87deg, #2dce89 0, #2dcecc 100%) !important; }
+  background: linear-gradient(87deg, #2dcecc 0, #2dce89 100%) !important; }
 
 .bg-gradient-teal {
   background: linear-gradient(87deg, #11cdef 0, #1171ef 100%) !important; }
@@ -15023,7 +15017,7 @@ a.text-gray-dark:hover, a.text-gray-dark:focus {
   color: #17172b !important; }
 
 .text-light {
-  color: #ced4da !important; }
+  color: #172b4d !important; }
 
 a.text-light:hover, a.text-light:focus {
   color: #a2aeb9 !important; }

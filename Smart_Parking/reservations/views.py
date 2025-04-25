@@ -1,9 +1,11 @@
+from dateutil import parser
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from bson import ObjectId
-from datetime import datetime, timezone
 import json
 from Smart_Parking.database import db
+from datetime import datetime, timezone, timedelta
+
 
 @csrf_exempt
 def reserve_parking_space(request):
@@ -21,8 +23,14 @@ def reserve_parking_space(request):
         date_fin = data["dateFin"]
 
         # === DATE HANDLING ===
-        date_debut_dt = datetime.fromisoformat(date_debut).astimezone(timezone.utc)
-        date_fin_dt = datetime.fromisoformat(date_fin).astimezone(timezone.utc)
+        date_debut_dt = parser.isoparse(date_debut)
+        date_fin_dt = parser.isoparse(date_fin)
+
+        if date_debut_dt.tzinfo is None:
+            date_debut_dt = date_debut_dt.replace(tzinfo=timezone.utc)
+        if date_fin_dt.tzinfo is None:
+            date_fin_dt = date_fin_dt.replace(tzinfo=timezone.utc)
+
         now = datetime.now(timezone.utc)
 
         # Reject if dateDebut already passed
@@ -30,7 +38,6 @@ def reserve_parking_space(request):
             return JsonResponse({"success": False, "error": "Reservation start time is in the past"}, status=400)
 
         # === VALIDATIONS ===
-
         parking_lot = db.parkingLots.find_one({
             "_id": ObjectId(parking_lot_id),
             "status": "active"
@@ -62,9 +69,7 @@ def reserve_parking_space(request):
             return JsonResponse({"success": False, "error": "Invalid or unverified vehicle"}, status=400)
 
         # === STORE RESERVATION ===
-
         status = "pending"
-
         reservation = {
             "userId": ObjectId(user_id),
             "parkingLotId": ObjectId(parking_lot_id),
