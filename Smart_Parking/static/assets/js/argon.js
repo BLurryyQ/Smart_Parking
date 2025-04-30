@@ -421,7 +421,7 @@ var Charts = (function() {
 					content += '<span class="popover-body-label mr-auto">' + label + '</span>';
 				}
 
-				content += '<span class="popover-body-value">' + prefix + yLabel + suffix + '</span>';
+				content += prefix + yLabel + suffix;
 				return content;
 			}
 
@@ -892,7 +892,7 @@ var SalesChart = (function() {
             ticks: {
               callback: function(value) {
                 if (!(value % 10)) {
-                  return '$' + value + 'k';
+                  return 'MAD ' + value + 'k';
                 }
               }
             }
@@ -909,7 +909,7 @@ var SalesChart = (function() {
                 content += '<span class="popover-body-label mr-auto">' + label + '</span>';
               }
 
-              content += '<span class="popover-body-value">$' + yLabel + 'k</span>';
+              content += 'MAD ' + yLabel + 'k';
               return content;
             }
           }

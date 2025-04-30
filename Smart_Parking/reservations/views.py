@@ -6,7 +6,6 @@ import json
 from Smart_Parking.database import db
 from datetime import datetime, timezone, timedelta
 
-
 @csrf_exempt
 def reserve_parking_space(request):
     if request.method != "POST":
@@ -152,6 +151,41 @@ def cancel_reservation(request, reservation_id):
         )
 
         return JsonResponse({"success": True, "message": "Reservation cancelled successfully"})
+
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+
+@csrf_exempt
+def extend_reservation(request, reservation_id):
+    if request.method != "PATCH":
+        return JsonResponse({"error": "Invalid method"}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        new_date_fin = data.get("dateFin")
+
+        if not new_date_fin:
+            return JsonResponse({"success": False, "error": "Missing dateFin"}, status=400)
+
+        date_fin_dt = parser.isoparse(new_date_fin)
+        if date_fin_dt.tzinfo is None:
+            date_fin_dt = date_fin_dt.replace(tzinfo=timezone.utc)
+
+        updated = db.reservations.update_one(
+            {"_id": ObjectId(reservation_id)},
+            {
+                "$set": {
+                    "dateFin": date_fin_dt,
+                    "updatedAt": datetime.now(timezone.utc)
+                }
+            }
+        )
+
+        if updated.matched_count == 0:
+            return JsonResponse({"success": False, "error": "Reservation not found"}, status=404)
+
+        return JsonResponse({"success": True, "message": "Reservation updated"})
 
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=500)

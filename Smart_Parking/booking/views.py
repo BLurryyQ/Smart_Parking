@@ -6,7 +6,6 @@ from datetime import datetime, timedelta, timezone
 
 def update_expired_reservations():
     now = datetime.now(timezone.utc)
-    grace = timedelta(minutes=1)
 
     reservations = db['reservations']
     parking_spaces = db['parkingSpaces']
@@ -25,16 +24,17 @@ def update_expired_reservations():
     # 2. Activate eligible pending reservations
     to_activate = reservations.find({
         'status': 'pending',
-        'dateDebut': {'$lte': now + grace},
+        'dateDebut': {'$lte': now},
         'dateFin': {'$gt': now}
     })
+
     for res in to_activate:
         reservations.update_one(
             {'_id': res['_id']},
             {'$set': {'status': 'active', 'updatedAt': now}}
         )
 
-    # 3. Free up parking spaces with no active/pending reservation
+    # 3. Free up parking spaces
     active_pending_space_ids = set(
         reservations.distinct("spaceId", {"status": {"$in": ["active", "pending"]}})
     )
