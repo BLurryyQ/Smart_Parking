@@ -141,7 +141,7 @@ const Payment = () => {
                             <View style={styles.line}></View>
                         </View>
                         <View style={styles.pay_tab_container}>
-                            <TouchableOpacity style={[styles.tab, { backgroundColor: theme.cardbg }]}>
+                            <TouchableOpacity style={[styles.tab, { backgroundColor: theme.cardbg }]} onPress={() => setChecked(false)}>
                                 <View style={styles.tab_left}>
                                     <Stripe />
                                     <Text style={styles.tab_text}>Stripe</Text>
