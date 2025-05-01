@@ -83,7 +83,19 @@ const Timer = () => {
     else router.push('booking');
   };
 
-  const extend = () => router.push('(screens)/extendParking');
+  const extend = async () => {
+    const userId = await AsyncStorage.getItem('userId');
+    const correctedDateFin = new Date(new Date(dateFin).getTime() + 3600000).toISOString(); // apply +1h before sending
+    router.push({
+      pathname: '(screens)/extendParking',
+      params: {
+        reservationId,
+        userId,
+        dateFin: correctedDateFin
+      }
+    });
+  };
+
 
   if (!isAuthenticated || loading) {
     return (

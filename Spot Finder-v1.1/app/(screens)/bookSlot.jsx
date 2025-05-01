@@ -43,57 +43,73 @@ const BookSlot = () => {
     const { theme, darkMode } = useContext(ThemeContext);
     const { userId, parkingLotId } = useLocalSearchParams();
     const timeSlots = generateTimeSlots();
+    const todayDate = new Date().toISOString().split('T')[0];
     const [activetab, setActivetab] = useState(timeSlots[0].id);
     const [activetab2, setActivetab2] = useState(timeSlots[1]?.id ?? timeSlots[0].id);
-    const [selectedDate, setSelectedDate] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(todayDate); // Pre-fill with today
     const [parkingLot, setParkingLot] = useState(null);
     const [loading, setLoading] = useState(true);
 
     const set_tab = (id) => setActivetab(id);
     const set_tab2 = (id) => setActivetab2(id);
 
-    const arrivalTime = timeSlots.find(t => t.id === activetab)?.time || '';
-    const exitTime = timeSlots.find(t => t.id === activetab2)?.time || '';
-
-    const dateDebut = new Date(`${selectedDate}T${arrivalTime.split(' ')[0]}:00`);
-    const dateFin = new Date(`${selectedDate}T${exitTime.split(' ')[0]}:00`);
-
     const vehicle = async () => {
-        const now = new Date();
+        try {
+            const arrivalTimeRaw = timeSlots.find(t => t.id === activetab)?.time;
+            const exitTimeRaw = timeSlots.find(t => t.id === activetab2)?.time;
 
-        // fallback to today if not selected
-        const formattedDate = selectedDate || now.toISOString().split('T')[0];
+            if (!arrivalTimeRaw || !exitTimeRaw) {
+                alert("Please select arrival and exit time.");
+                return;
+            }
 
-        // handle default fallback times
-        const defaultStart = new Date(now);
-        const defaultEnd = new Date(now.getTime() + 30 * 60 * 1000);
+            // Extract hour and minute
+            const [arrivalHour, arrivalMinute] = arrivalTimeRaw.split(/[: ]/);
+            const [exitHour, exitMinute] = exitTimeRaw.split(/[: ]/);
 
-        const arrivalTimeRaw = timeSlots.find(t => t.id === activetab)?.time;
-        const exitTimeRaw = timeSlots.find(t => t.id === activetab2)?.time;
+            const arrivalPeriod = arrivalTimeRaw.split(' ')[1]; // AM or PM
+            const exitPeriod = exitTimeRaw.split(' ')[1];
 
-        const arrivalTime = arrivalTimeRaw ? arrivalTimeRaw.split(" ")[0] : defaultStart.toTimeString().slice(0, 5); // "HH:MM"
-        const exitTime = exitTimeRaw ? exitTimeRaw.split(" ")[0] : defaultEnd.toTimeString().slice(0, 5); // "HH:MM"
+            // Convert to 24h format
+            let arrivalH = parseInt(arrivalHour, 10);
+            let exitH = parseInt(exitHour, 10);
 
-        const dateDebut = new Date(`${formattedDate}T${arrivalTime}:00`);
-        const dateFin = new Date(`${formattedDate}T${exitTime}:00`);
+            if (arrivalPeriod === 'PM' && arrivalH !== 12) arrivalH += 12;
+            if (arrivalPeriod === 'AM' && arrivalH === 12) arrivalH = 0;
+            if (exitPeriod === 'PM' && exitH !== 12) exitH += 12;
+            if (exitPeriod === 'AM' && exitH === 12) exitH = 0;
 
-        if (isNaN(dateDebut.getTime()) || isNaN(dateFin.getTime())) {
-            alert("Invalid date or time. Please try again.");
-            return;
+            // Now subtract 1 hour
+            arrivalH = (arrivalH - 1 + 24) % 24;
+            exitH = (exitH - 1 + 24) % 24;
+
+            // Build full ISO dates
+            const [year, month, day] = selectedDate.split('-').map(Number);
+
+            const dateDebut = new Date(Date.UTC(year, month - 1, day, arrivalH, parseInt(arrivalMinute, 10)));
+            const dateFin = new Date(Date.UTC(year, month - 1, day, exitH, parseInt(exitMinute, 10)));
+
+            if (isNaN(dateDebut.getTime()) || isNaN(dateFin.getTime())) {
+                alert("Invalid date or time. Please try again.");
+                return;
+            }
+
+            const userData = await AsyncStorage.getItem('user');
+            const userId = JSON.parse(userData)._id;
+
+            const payload = {
+                userId,
+                parkingLotId,
+                dateDebut: dateDebut.toISOString(),
+                dateFin: dateFin.toISOString(),
+            };
+
+            await AsyncStorage.setItem('reservationInfo', JSON.stringify(payload));
+            router.push({ pathname: '(screens)/vehicle' });
+        } catch (error) {
+            console.error("Error reserving slot:", error);
+            alert("Something went wrong. Please try again.");
         }
-
-        const userData = await AsyncStorage.getItem('user');
-        const userId = JSON.parse(userData)._id;
-
-        const payload = {
-            userId,
-            parkingLotId,
-            dateDebut: dateDebut.toISOString(),
-            dateFin: dateFin.toISOString(),
-        };
-
-        await AsyncStorage.setItem('reservationInfo', JSON.stringify(payload));
-        router.push({ pathname: '(screens)/vehicle' });
     };
 
     const back = () => {
@@ -195,125 +211,29 @@ const BookSlot = () => {
 export default BookSlot;
 
 const styles = StyleSheet.create({
-    details_page: {
-        flex: 1,
-    },
-    image: {
-        width: '100%',
-        borderRadius: 10,
-        height:Platform.OS === 'web'? 250 : 300,
-    },
-    header: {
-        position: 'absolute',
-        left: 20,
-        top: 50,
-    },
-    container: {
-        flex: 1,
-        paddingTop: 24,
-        paddingHorizontal: 20,
-    },
-    scrollView: {
-        flex: 1,
-    },
-    scrollViewContent: {
-        paddingBottom: 50,
-    },
-    review_row: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
+    details_page: { flex: 1 },
+    image: { width: '100%', borderRadius: 10, height: Platform.OS === 'web' ? 250 : 300 },
+    header: { position: 'absolute', left: 20, top: 50 },
+    container: { flex: 1, paddingTop: 24, paddingHorizontal: 20 },
+    scrollView: { flex: 1 },
+    scrollViewContent: { paddingBottom: 50 },
+    review_row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     parking: {
-        fontSize: 10,
-        lineHeight: 11,
-        fontFamily: 'Montserrat_600SemiBold',
-        color: '#007BFF',
-        backgroundColor: "rgba(0, 123, 255, 0.2)",
-        borderRadius: 5,
-        paddingVertical: 5,
-        paddingHorizontal: 10,
-        maxWidth: 85,
-        marginVertical: 8,
+        fontSize: 10, lineHeight: 11, fontFamily: 'Montserrat_600SemiBold', color: '#007BFF',
+        backgroundColor: "rgba(0, 123, 255, 0.2)", borderRadius: 5, paddingVertical: 5, paddingHorizontal: 10,
+        maxWidth: 85, marginVertical: 8
     },
-    rating_row: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 5,
-    },
-    review: {
-        fontSize: 14,
-        lineHeight: 17,
-        fontFamily: 'Roboto_400Regular',
-        color: '#BABABA',
-    },
-    title_row: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingTop: 10,
-        paddingBottom: 5,
-    },
-    title: {
-        fontSize: 22,
-        lineHeight: 32,
-        fontFamily: 'Montserrat_600SemiBold',
-        color: '#000000',
-        textTransform: 'capitalize',
-    },
-    title_text: {
-        fontSize: 16,
-        lineHeight: 26,
-        fontFamily: 'Roboto_400Regular',
-        color: '#757575',
-    },
-    book_title: {
-        fontSize: 18,
-        lineHeight: 28,
-        fontFamily: 'Montserrat_500Medium',
-        color: '#757575',
-        marginTop: 24,
-        paddingBottom: 16,
-    },
-    content_heading: {
-        fontSize: 18,
-        lineHeight: 28,
-        fontFamily: 'Montserrat_600SemiBold',
-        color: '#121212',
-        textTransform: 'capitalize',
-    },
-    time_container: {
-        flexDirection: 'row',
-        gap: 10,
-        marginTop: 16,
-        marginBottom: 20,
-    },
-    tab: {
-        borderColor: '#BABABA',
-        borderRadius: 5,
-        borderWidth: 1,
-        paddingVertical: 8,
-        paddingHorizontal: 4,
-        minWidth: 70,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    activetab: {
-        backgroundColor: '#FF95AE',
-    },
-    time: {
-        fontSize: 12,
-        lineHeight: 24,
-        fontFamily: 'Montserrat_500Medium',
-        color: '#757575',
-    },
-    activetime: {
-        fontSize: 14,
-        lineHeight: 24,
-        fontFamily: 'Montserrat_700Bold',
-        color: '#ffffff',
-    },
-    button_box: {
-        paddingTop: 20,
-    }
+    rating_row: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+    review: { fontSize: 14, lineHeight: 17, fontFamily: 'Roboto_400Regular', color: '#BABABA' },
+    title_row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, paddingBottom: 5 },
+    title: { fontSize: 22, lineHeight: 32, fontFamily: 'Montserrat_600SemiBold', color: '#000000', textTransform: 'capitalize' },
+    title_text: { fontSize: 16, lineHeight: 26, fontFamily: 'Roboto_400Regular', color: '#757575' },
+    book_title: { fontSize: 18, lineHeight: 28, fontFamily: 'Montserrat_500Medium', color: '#757575', marginTop: 24, paddingBottom: 16 },
+    content_heading: { fontSize: 18, lineHeight: 28, fontFamily: 'Montserrat_600SemiBold', color: '#121212', textTransform: 'capitalize' },
+    time_container: { flexDirection: 'row', gap: 10, marginTop: 16, marginBottom: 20 },
+    tab: { borderColor: '#BABABA', borderRadius: 5, borderWidth: 1, paddingVertical: 8, paddingHorizontal: 4, minWidth: 70, alignItems: 'center', justifyContent: 'center' },
+    activetab: { backgroundColor: '#FF95AE' },
+    time: { fontSize: 12, lineHeight: 24, fontFamily: 'Montserrat_500Medium', color: '#757575' },
+    activetime: { fontSize: 14, lineHeight: 24, fontFamily: 'Montserrat_700Bold', color: '#ffffff' },
+    button_box: { paddingTop: 20 },
 });

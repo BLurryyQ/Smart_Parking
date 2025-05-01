@@ -25,6 +25,20 @@ const parkingImages = [
 
 const FAVORITES_KEY = 'favorite_parkings';
 
+const haversine = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radius of Earth in km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+};
+
+
 const Home = () => {
     const { theme, darkMode } = useContext(ThemeContext);
     const [wishlist, setWishlist] = useState([]);
@@ -32,6 +46,8 @@ const Home = () => {
     const [parkings, setParkings] = useState([]);
     const [imageMap, setImageMap] = useState({});
     const [loading, setLoading] = useState(true);
+    const [userCoords, setUserCoords] = useState(null);
+
 
     useEffect(() => {
         const loadInitialData = async () => {
@@ -40,6 +56,7 @@ const Home = () => {
                 if (storedLocation) {
                     const parsed = JSON.parse(storedLocation);
                     setUserLocation(`${parsed.city || "Unknown City"}, ${parsed.country || "Unknown Country"}`);
+                    setUserCoords({ lat: parsed.latitude, lon: parsed.longitude });
                 }
 
                 const storedFavorites = await AsyncStorage.getItem(FAVORITES_KEY);
@@ -168,39 +185,49 @@ const Home = () => {
                     </View>
 
                     <View style={styles.stack_container}>
-                        {parkings.map((p) => (
-                            <TouchableOpacity key={p._id} style={[styles.stack, { backgroundColor: theme.cardbg }]} onPress={() => details(p._id)}>
-                                <View style={styles.imageContainer}>
-                                    <Image source={imageMap[p._id]} style={styles.stack_img} />
-                                    <TouchableOpacity onPress={() => toggleWishlist(p._id)} style={styles.wishlist_container2}>
-                                        {wishlist.includes(p._id) ? <HeartFilled /> : <Heart />}
-                                    </TouchableOpacity>
-                                </View>
-                                <View style={styles.stack_body}>
-                                    <View style={styles.stack_body_row}>
-                                        <Text style={styles.parking}>Car Parking</Text>
-                                        <View style={styles.rating_row}>
-                                            <Star />
-                                            <Text style={styles.rating}>4.9</Text>
+                        {[...parkings]
+                            .filter(p => p.localisation?.coordinates)
+                            .sort((a, b) => {
+                                if (!userCoords) return 0;
+                                const [lonA, latA] = a.localisation.coordinates;
+                                const [lonB, latB] = b.localisation.coordinates;
+                                const distA = haversine(userCoords.lat, userCoords.lon, latA, lonA);
+                                const distB = haversine(userCoords.lat, userCoords.lon, latB, lonB);
+                                return distA - distB;
+                            })
+                            .map((p) => (
+                                <TouchableOpacity key={p._id} style={[styles.stack, { backgroundColor: theme.cardbg }]} onPress={() => details(p._id)}>
+                                    <View style={styles.imageContainer}>
+                                        <Image source={imageMap[p._id]} style={styles.stack_img} />
+                                        <TouchableOpacity onPress={() => toggleWishlist(p._id)} style={styles.wishlist_container2}>
+                                            {wishlist.includes(p._id) ? <HeartFilled /> : <Heart />}
+                                        </TouchableOpacity>
+                                    </View>
+                                    <View style={styles.stack_body}>
+                                        <View style={styles.stack_body_row}>
+                                            <Text style={styles.parking}>Car Parking</Text>
+                                            <View style={styles.rating_row}>
+                                                <Star />
+                                                <Text style={styles.rating}>4.9</Text>
+                                            </View>
+                                        </View>
+                                        <View style={styles.name_price2}>
+                                            <Text style={[styles.name, { color: theme.color }]}>{p.nom}</Text>
+                                            <Text style={styles.price}>5.00 MAD <Text style={styles.time}>/hr</Text></Text>
+                                        </View>
+                                        <View style={styles.timing_car2}>
+                                            <View style={styles.timing_row}>
+                                                <Cars />
+                                                <Text style={[styles.timing, { color: theme.color }]}>{p.capaciteTotal} total</Text>
+                                            </View>
+                                            <View style={styles.car_row}>
+                                                <Car />
+                                                <Text style={[styles.car, { color: theme.color }]}>{p.placeDisponibles} spots</Text>
+                                            </View>
                                         </View>
                                     </View>
-                                    <View style={styles.name_price2}>
-                                        <Text style={[styles.name, { color: theme.color }]}>{p.nom}</Text>
-                                        <Text style={styles.price}>5.00 MAD <Text style={styles.time}>/hr</Text></Text>
-                                    </View>
-                                    <View style={styles.timing_car2}>
-                                        <View style={styles.timing_row}>
-                                            <Cars />
-                                            <Text style={[styles.timing, { color: theme.color }]}>{p.capaciteTotal} total</Text>
-                                        </View>
-                                        <View style={styles.car_row}>
-                                            <Car />
-                                            <Text style={[styles.car, { color: theme.color }]}>{p.placeDisponibles} spots</Text>
-                                        </View>
-                                    </View>
-                                </View>
-                            </TouchableOpacity>
-                        ))}
+                                </TouchableOpacity>
+                            ))}
                     </View>
                 </ScrollView>
             )}
@@ -292,18 +319,21 @@ const styles = StyleSheet.create({
     },
     horizontal_scroll: {
         maxHeight: 300,
+        flexGrow: 0,
     },
     popular_container: {
         flexDirection: 'row',
         paddingVertical: 10,
     },
     popular_box: {
-        width: Platform.OS === 'web' ? '35%' : 220,
+        width: 240,
         marginRight: 14,
         backgroundColor: '#F6F6F6',
         borderRadius: 12,
         padding: 10,
+        flexShrink: 0,
     },
+
     image: {
         width: '100%',
         height: 140,
