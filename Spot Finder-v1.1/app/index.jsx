@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     bottom: Platform.OS === 'web' ? 0 : 40,
     width: '100%',
-    paddingBottom: Platform.OS === 'web' ? 10 : 30,
+    paddingBottom: Platform.OS === 'web' ? 50 : 30,
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
     paddingHorizontal: 20,
