@@ -21,9 +21,6 @@
     <orderEntry type="library" name="00ac82b6db" level="application" />
     <orderEntry type="library" name="leaflet" level="application" />
   </component>
-  <component name="PackageRequirementsSettings">
-    <option name="versionSpecifier" value="Greater or equal (&gt;=x.y.z)" />
-  </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_CONFIGURATION" value="Django" />
     <option name="TEMPLATE_FOLDERS">
